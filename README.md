@@ -1,6 +1,5 @@
 # FragmentationStudy
 
-
 Using MadGraph, we aim to produce particle level samples of pure QCD, like:
 
 ```
