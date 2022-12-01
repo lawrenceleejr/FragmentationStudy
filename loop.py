@@ -11,7 +11,7 @@ def savehist(hist, histname):
     the ROOT file."""
     # myfile = ROOT.TFile.Open("histo.root", "RECREATE")
     myfile.WriteObject(hist, histname)
-    print("Wrote %s to histo.root"%histname)
+    # print("Wrote %s to histo.root"%histname)
 
 
 printStuff = False
@@ -21,8 +21,8 @@ try:
 except:
     pass
 
-if len(sys.argv) < 2:
-    print(" Usage: Example1.py input_file")
+if len(sys.argv) < 3:
+    print(" Usage: loop.py input_file results_name")
     sys.exit(1)
 
 print("Beginning...")
@@ -37,7 +37,7 @@ except:
 inputFile = sys.argv[1]
 
 # Create .root file to save histograms
-myfile = ROOT.TFile.Open("histo.root", "RECREATE")
+myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
 
 # Create chain of root trees
 chain = ROOT.TChain("Delphes")
@@ -91,27 +91,28 @@ for entry in range(0, numberOfEntries):
 c0 = ROOT.TCanvas()
 c0.Update()
 histGenJetPT.Draw()
-c0.Print("GenJetPT.png")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetPT.png")
 c0.Clear()
 
 c0.Update()
 histGenJetM.Draw()
-c0.Print("GenJetMass.png")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetMass.png")
 c0.Clear()
 
 c0.Update()
 histPartVsPT.SetContour(1000)
 profx = histPartVsPT.ProfileX("profilex", 0, 100)
 profx.Draw()
-c0.Print("PartVsPTprofx.png")
-savehist(histPartVsPT, "PartVsPT")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
 # histPartVsPT.SetStats(0)
 histPartVsPT.Draw("colz")
-c0.Print("PartVsPT.png")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
 c0.Clear()
 
 # Save resulting histograms to .root file
+savehist(histPartVsPT, "PartVsPT")
 savehist(histGenJetPT, "GenJetPT")
+# savehist()
 
 
 print("Done!")
