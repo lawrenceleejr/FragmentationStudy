@@ -2,6 +2,7 @@
 
 import sys
 import os
+import glob
 
 
 try:
@@ -21,8 +22,13 @@ print("Beginning...")
 os.system("docker run --rm -i -v $PWD:$PWD -w $PWD scailfin/madgraph5-amc-nlo:mg5_amc3.3.1 "
           "'./eeToZgamma/bin/generate_events -f'")
 # Copies and unzips new .hepmc
-os.system("cp eeToZgamma/Events/run_01/*.hepmc.gz Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc.gz")
-os.system("gunzip Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc.gz")
+if len(glob.glob("eeToZgamma/Events/run_01/*hepmc.gz")) == 0:
+    os.system("cp eeToZgamma/Events/run_01/*.hepmc Delphes-3.5.0/Frag_Study/pythia8_events_" + results_name + ".hepmc")
+elif os.path.exists(glob.glob("eeToZgamma/Events/run_01/*hepmc.gz")[0]):
+    os.system("cp eeToZgamma/Events/run_01/*.hepmc.gz Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc.gz")
+    os.system("gunzip Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc.gz")
+else:
+    sys.exit("No hepmc file")
 # Runs .hepmc through Delphes creating a .root
 os.system("docker run --rm -i -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mario-mapyde/delphes "
           "'./Delphes-3.5.0/DelphesHepMC2 Delphes-3.5.0/cards/delphes_card_CMS.tcl "
@@ -36,7 +42,8 @@ os.system("docker run --rm -i -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mario-map
 os.system("docker run --rm -i -v $PWD:$PWD -w $PWD scailfin/madgraph5-amc-nlo:mg5_amc3.3.1 'rm -r "
           "eeToZgamma/Events/run_*'")
 # Removes .hepmc files but preserves .root files
+# os.system("docker run --rm -i -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mario-mapyde/delphes 'rm "
+#           "Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc'")
+# Removes .hepmc and .root files
 os.system("docker run --rm -i -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mario-mapyde/delphes 'rm "
-          "Delphes-3.5.0/Frag_Study/pythia8_events_"+results_name+".hepmc'")
-# os.system("docker run --rm -i -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mario-mapyde/delphes 'rm
-# Delphes-3.5.0/Frag_Study/*'")
+          "Delphes-3.5.0/Frag_Study/*'")
