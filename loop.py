@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-
 import ROOT
+import math
 
 
 def savehist(hist, histname):
@@ -53,12 +53,12 @@ branchGenJet = treeReader.UseBranch("GenJet")
 
 # Book histograms
 # TH1F::TH1F(const char* name, const char* title, int nbinsx, double xlow, double xup) =>
-histGenJetPT = ROOT.TH1F("GenJet_pt", "GenJet P_{T}; GenJet PT; #", 100, 0.0, 100.0)
+histGenJetP = ROOT.TH1F("GenJet_p", "GenJet P; GenJet P; #", 100, 0.0, 100.0)
 histGenJetM = ROOT.TH1F("GenJet_mass", "GenJet Mass; GenJet Mass; #", 100, 0.0, 10.0)
 # TH2F::TH2F(const char* name, const char* title, int nbinsx, double xlow, double xup, int nbinsy, double ylow,
 # double yup) =>
-histPartVsPT = ROOT.TH2F(
-    "# of particles Vs pt", "Number of Particles Vs GenJet P_{T}; GenJet P_{T}; # of particles",
+histPartVsP = ROOT.TH2F(
+    "# of particles Vs p", "Number of Particles Vs GenJet P; GenJet P; # of particles",
     100, 0.0, 500.0, 50, 0.0, 50.0)
 
 # Loop over all events
@@ -74,24 +74,27 @@ for entry in range(0, numberOfEntries):
 
         # Plot GenGet.M() and then throw away GenJets that have a low mass
         histGenJetM.Fill(GenJet.Mass)
-        if GenJet.Mass < 1:
+        if GenJet.Mass < 0.01:
             continue
 
         # Plot GenJet transverse momentum
-        histGenJetPT.Fill(GenJet.PT)
-        histPartVsPT.Fill(GenJet.PT, GenJet.NCharged)
+        P = GenJet.PT * math.cosh(GenJet.Eta)
+        histGenJetP.Fill(P)
+        histPartVsP.Fill(P, GenJet.NCharged)
+        # histGenJetPT.Fill(GenJet.PT)
+        # histPartVsPT.Fill(GenJet.PT, GenJet.NCharged)
 
         # Print GenJet transverse momentum
         if printStuff:
-            print("GenJet.PT ", GenJet.PT)
+            print("GenJet.P ", GenJet.P)
             print("GenJet.Particles ", GenJet.Particles)
             print("GenJet.NCharged ", GenJet.NCharged)
 
 # Show resulting histograms
 c0 = ROOT.TCanvas()
 c0.Update()
-histGenJetPT.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetPT.png")
+histGenJetP.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetP.png")
 c0.Clear()
 
 c0.Update()
@@ -100,18 +103,20 @@ c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetMass.png")
 c0.Clear()
 
 c0.Update()
-histPartVsPT.SetContour(1000)
-profx = histPartVsPT.ProfileX("profilex", 0, 100)
+histPartVsP.SetContour(1000)
+profx = histPartVsP.ProfileX("profilex", 0, 100)
 profx.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPprofx.png")
 # histPartVsPT.SetStats(0)
-histPartVsPT.Draw("colz")
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
+histPartVsP.Draw("colz")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsP.png")
 c0.Clear()
 
 # Save resulting histograms to .root file
-savehist(histPartVsPT, "PartVsPT")
-savehist(histGenJetPT, "GenJetPT")
+savehist(histPartVsP, "PartVsP")
+savehist(histGenJetP, "GenJetP")
+savehist(profx, "PartVsPprofx")
+savehist(histGenJetM, "GenJetMass")
 # savehist()
 
 
