@@ -9,9 +9,7 @@ def savehist(hist, histname):
     """At the end of the function, there are no more references to `file`.
     The `TFile` object gets deleted, which in turn saves and closes
     the ROOT file."""
-    # myfile = ROOT.TFile.Open("histo.root", "RECREATE")
     myfile.WriteObject(hist, histname)
-    # print("Wrote %s to histo.root"%histname)
 
 
 printStuff = False
@@ -22,7 +20,7 @@ except:
     pass
 
 if len(sys.argv) < 3:
-    print(" Usage: loop.py input_file results_name")
+    print(" Usage: loop.py input_root_file results_name")
     sys.exit(1)
 
 print("Beginning...")
@@ -49,16 +47,19 @@ numberOfEntries = treeReader.GetEntries()
 
 # Get pointers to branches used in this analysis
 branchGenJet = treeReader.UseBranch("GenJet")
-# branchElectron = treeReader.UseBranch("Electron")
 
 # Book histograms
 # TH1F::TH1F(const char* name, const char* title, int nbinsx, double xlow, double xup) =>
 histGenJetP = ROOT.TH1F("GenJet_p", "GenJet P; GenJet P; #", 100, 0.0, 100.0)
+histGenJetPT = ROOT.TH1F("GenJet_pt", "GenJet PT; GenJet PT; #", 100, 0.0, 100.0)
 histGenJetM = ROOT.TH1F("GenJet_mass", "GenJet Mass; GenJet Mass; #", 100, 0.0, 10.0)
 # TH2F::TH2F(const char* name, const char* title, int nbinsx, double xlow, double xup, int nbinsy, double ylow,
 # double yup) =>
 histPartVsP = ROOT.TH2F(
     "# of particles Vs p", "Number of Particles Vs GenJet P; GenJet P; # of particles",
+    100, 0.0, 500.0, 50, 0.0, 50.0)
+histPartVsPT = ROOT.TH2F(
+    "# of particles Vs pt", "Number of Particles Vs GenJet PT; GenJet PT; # of particles",
     100, 0.0, 500.0, 50, 0.0, 50.0)
 
 # Loop over all events
@@ -67,7 +68,6 @@ for entry in range(0, numberOfEntries):
     treeReader.ReadEntry(entry)
 
     # If event contains at least 1 GenJet
-    # if branchGenJet.GetEntries() > 0:
     for ijet in range(branchGenJet.GetEntries()):
         # Take first GenJet
         GenJet = branchGenJet.At(ijet)
@@ -81,8 +81,8 @@ for entry in range(0, numberOfEntries):
         P = GenJet.PT * math.cosh(GenJet.Eta)
         histGenJetP.Fill(P)
         histPartVsP.Fill(P, GenJet.NCharged)
-        # histGenJetPT.Fill(GenJet.PT)
-        # histPartVsPT.Fill(GenJet.PT, GenJet.NCharged)
+        histGenJetPT.Fill(GenJet.PT)
+        histPartVsPT.Fill(GenJet.PT, GenJet.NCharged)
 
         # Print GenJet transverse momentum
         if printStuff:
@@ -98,6 +98,11 @@ c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetP.png")
 c0.Clear()
 
 c0.Update()
+histGenJetPT.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetPT.png")
+c0.Clear()
+
+c0.Update()
 histGenJetM.Draw()
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetMass.png")
 c0.Clear()
@@ -107,17 +112,27 @@ histPartVsP.SetContour(1000)
 profx = histPartVsP.ProfileX("profilex", 0, 100)
 profx.Draw()
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPprofx.png")
-# histPartVsPT.SetStats(0)
 histPartVsP.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsP.png")
+c0.Clear()
+
+c0.Update()
+histPartVsPT.SetContour(1000)
+pt_profx = histPartVsPT.ProfileX("profilex", 0, 100)
+pt_profx.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
+histPartVsPT.Draw("colz")
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
 c0.Clear()
 
 # Save resulting histograms to .root file
 savehist(histPartVsP, "PartVsP")
 savehist(histGenJetP, "GenJetP")
 savehist(profx, "PartVsPprofx")
+savehist(histPartVsPT, "PartVsPT")
+savehist(histGenJetPT, "GenJetPT")
+savehist(pt_profx, "PartVsPTprofx")
 savehist(histGenJetM, "GenJetMass")
-# savehist()
 
 
 print("Done!")
