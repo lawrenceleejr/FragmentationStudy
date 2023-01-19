@@ -13,6 +13,8 @@ def savehist(hist, histname):
 
 
 printStuff = False
+# mult_switch = GenJet.NCharged + GenJet.NNeutrals
+# mult_switch = GenJet.NCharged
 
 try:
     input = raw_input
@@ -47,6 +49,11 @@ numberOfEntries = treeReader.GetEntries()
 
 # Get pointers to branches used in this analysis
 branchGenJet = treeReader.UseBranch("GenJet")
+branchParticle = treeReader.UseBranch("Particle")
+
+# Some constants and such
+partonID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 21, -1, -2, -3, -4, -5, -6, -7, -8, -9, -21]
+deltaRMax = 0.4
 
 # Book histograms
 # TH1F::TH1F(const char* name, const char* title, int nbinsx, double xlow, double xup) =>
@@ -69,8 +76,33 @@ for entry in range(0, numberOfEntries):
 
     # If event contains at least 1 GenJet
     for ijet in range(branchGenJet.GetEntries()):
-        # Take first GenJet
         GenJet = branchGenJet.At(ijet)
+        highestEnergyParticle = 0
+        particleIndex = -1
+        highestEnergyPID = 0
+
+        # Determines if a parton initiated the jet
+        for iparticle in range(branchParticle.GetEntries()):
+            Particle = branchParticle.At(iparticle)
+            if Particle.PID in partonID:
+                ParticleEta = Particle.Eta
+                ParticlePhi = Particle.Phi
+                JetEta = GenJet.Eta
+                JetPhi = GenJet.Phi
+                deltaEta = abs(JetEta - ParticleEta)
+                deltaPhi = abs(JetPhi - ParticlePhi)
+                if deltaPhi > math.pi:
+                    deltaPhi = deltaPhi - (2 * math.pi)
+                delta_R = math.sqrt(math.pow(deltaEta, 2) + math.pow(deltaPhi, 2))
+                trackingEnergy = Particle.E
+                if delta_R < deltaRMax and trackingEnergy > highestEnergyParticle:
+                    highestEnergyParticle = trackingEnergy
+                    particleIndex = iparticle
+                    highestEnergyPID = Particle.PID
+
+        # If the initiating parton is a gluon, throws away the jet
+        if highestEnergyPID == 21:
+            continue
 
         # Plot GenGet.M() and then throw away GenJets that have a low mass
         histGenJetM.Fill(GenJet.Mass)
@@ -80,9 +112,9 @@ for entry in range(0, numberOfEntries):
         # Plot GenJet transverse momentum
         P = GenJet.PT * math.cosh(GenJet.Eta)
         histGenJetP.Fill(P)
-        histPartVsP.Fill(P, GenJet.NCharged)
+        histPartVsP.Fill(P, GenJet.NCharged + GenJet.NNeutrals)
         histGenJetPT.Fill(GenJet.PT)
-        histPartVsPT.Fill(GenJet.PT, GenJet.NCharged)
+        histPartVsPT.Fill(GenJet.PT, GenJet.NCharged + GenJet.NNeutrals)
 
         # Print GenJet transverse momentum
         if printStuff:
