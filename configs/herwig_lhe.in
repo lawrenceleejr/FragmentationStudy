@@ -1,0 +1,116 @@
+# Ref: https://herwig.hepforge.org/tutorials/workflow/inputoutput.html
+# loading "LesHouches.so" library 
+library LesHouches.so
+
+##################################################
+#   Create the Les Houches file handler and reader
+##################################################
+cd /Herwig/EventHandlers
+create ThePEG::LesHouchesFileReader myReader
+set myReader:FileName eeToZgamma_50k_unweighted_events.lhe.gz
+set myReader:CacheFileName cache.tmp
+#set myReader:maxScan 1000
+
+create ThePEG::Cuts /Herwig/Cuts/NoCuts 
+set myReader:Cuts /Herwig/Cuts/NoCuts
+
+set myReader:WeightWarnings true
+
+##################################################
+# Technical parameters for this run
+##################################################
+cd /Herwig/Generators
+set EventGenerator:NumberOfEvents 10000
+set EventGenerator:RandomNumberGenerator:Seed 31122001
+set EventGenerator:DebugLevel 1
+set EventGenerator:PrintEvent 1000
+set EventGenerator:MaxErrors 10000
+##################################################
+# physics parameters
+##################################################
+#cd /Herwig/Generators
+#set EventGenerator:EventHandler:LuminosityFunction:Energy 7000.*GeV
+set EventGenerator:EventHandler:CascadeHandler:MPIHandler NULL
+#set /Herwig/Shower/ShowerHandler:HardEmission 0
+## set /Herwig/Shower/PartnerFinder:QEDPartner IIandFF
+
+
+##################################################
+#   NoPDF: Switch off ISR in e+e- collisions
+##################################################
+#set myReader:InitPDFs 0
+#set myReader:MomentumTreatment RescaleEnergy # momentum conservation
+#set /Herwig/Particles/e-:PDF /Herwig/Partons/NoPDF
+#set /Herwig/Particles/e+:PDF /Herwig/Partons/NoPDF
+#
+## _lhefReader _lhefHandler
+
+
+##################################################
+#   Create the Les Houches Event handler
+##################################################
+cd /Herwig/EventHandlers
+create ThePEG::LesHouchesEventHandler myLesHouchesHandler
+# set the various step handlers
+set myLesHouchesHandler:CascadeHandler /Herwig/Shower/ShowerHandler
+set myLesHouchesHandler:HadronizationHandler /Herwig/Hadronization/ClusterHadHandler
+set myLesHouchesHandler:DecayHandler /Herwig/Decays/DecayHandler
+#set myLesHouchesHandler:PartonExtractor /Herwig/Partons/PPExtractor
+set myLesHouchesHandler:PartonExtractor /Herwig/Partons/EEExtractor
+#set myLesHouchesHandler:PartonExtractor /Herwig/Partons/QCDExtractor
+set myLesHouchesHandler:WeightOption NegUnitWeight
+# Valid options are: NegUnitWeight UnitWeight VarNegWeight VarWeight
+
+insert myLesHouchesHandler:LesHouchesReaders 0 myReader
+
+
+
+##################################################
+## Scale choice
+## See the documentation for more options
+##################################################
+
+#cd /Herwig/MatrixElements/Matchbox
+#set Factory:ScaleChoice Scales/SHatScale
+
+##################################################
+## Matching and shower selection
+##################################################
+read Matchbox/MCatLO-DefaultShower.in
+# read Matchbox/MCatNLO-DefaultShower.in
+
+##################################################
+## Handlers
+##################################################
+cd /Herwig/Generators
+set EventGenerator:EventHandler /Herwig/EventHandlers/myLesHouchesHandler
+## options: QCD, QED and QCDandQED
+#set /Herwig/Shower/ShowerHandler:Interactions QCDandQED
+set EventGenerator:EventHandler:StatLevel Full
+
+
+
+##################################################
+## Analyses
+##################################################
+#cd /Herwig/Analysis
+#insert Rivet:Analyses 0 ATLAS_2012_I1082936
+#insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 Rivet
+
+##################################################
+## Event Output
+##################################################
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers[0] /Herwig/Analysis/HepMCFile
+cd /Herwig/Analysis
+set HepMCFile:PrintEvent 1000000
+set HepMCFile:Format GenEvent
+set HepMCFile:Units GeV_mm
+set HepMCFile:Filename MG5-Herwig_events.hepmc
+
+##################################################
+## Save the generator
+##################################################
+do /Herwig/MatrixElements/Matchbox/Factory:ProductionMode
+
+cd /Herwig/Generators
+saverun LHE EventGenerator
