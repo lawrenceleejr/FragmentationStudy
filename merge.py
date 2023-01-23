@@ -26,7 +26,11 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 print("Beginning...")
-ROOT.gSystem.Load("libDelphes")
+if os.path.exists('/.dockerenv'):
+    print("Running in docker container")
+    ROOT.gSystem.Load('/usr/local/share/delphes/delphes/libDelphes')
+else:
+    ROOT.gSystem.Load("libDelphes")
 
 try:
     ROOT.gInterpreter.Declare('#include "classes/DelphesClasses.h"')
