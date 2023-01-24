@@ -27,7 +27,6 @@ if len(sys.argv) < 3:
 
 print("Beginning...")
 if os.path.exists('/usr/local/share/delphes/delphes/libDelphes.so'):
-    print("Running in docker container")
     ROOT.gSystem.Load('/usr/local/share/delphes/delphes/libDelphes')
 else:
     ROOT.gSystem.Load("libDelphes")
