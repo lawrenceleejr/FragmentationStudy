@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import sys,os
 import ROOT
 import math
 
@@ -26,8 +26,7 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 print("Beginning...")
-if os.path.exists('/.dockerenv'):
-    print("Running in docker container")
+if os.path.exists('/usr/local/share/delphes/delphes/libDelphes.so'):
     ROOT.gSystem.Load('/usr/local/share/delphes/delphes/libDelphes')
 else:
     ROOT.gSystem.Load("libDelphes")
