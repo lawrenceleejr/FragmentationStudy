@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import sys
+import sys, os
 import ROOT
 import math
+import numpy as np
+import uproot4
 
 
 def savehist(hist, histname):
@@ -26,7 +28,13 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 print("Beginning...")
-ROOT.gSystem.Load("libDelphes")
+
+if os.path.exists('/usr/local/share/delphes/delphes/libDelphes.so'):
+    ROOT.gSystem.Load('/usr/local/share/delphes/delphes/libDelphes')
+else:
+    ROOT.gSystem.Load("libDelphes")
+
+# ROOT.gSystem.Load("libDelphes")
 
 try:
     ROOT.gInterpreter.Declare('#include "classes/DelphesClasses.h"')
@@ -35,6 +43,8 @@ except:
     pass
 
 inputFile = sys.argv[1]
+
+f = uproot4.open(inputFile)
 
 # Create .root file to save histograms
 myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
@@ -69,8 +79,29 @@ histPartVsPT = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PT; GenJet PT; # of particles",
     100, 0.0, 500.0, 50, 0.0, 50.0)
 
+
+jetconst_refs = f["Delphes/GenJet.Particles"].array(library="np")
+jetpt_refs    = f["Delphes/GenJet.PT"].array(library="np")
+jeteta_refs   = f["Delphes/GenJet.Eta"].array(library="np")
+jetphi_refs   = f["Delphes/GenJet.Phi"].array(library="np")
+jetm_refs     = f["Delphes/GenJet.Mass"].array(library="np")
+
+pid_refs      = f["Delphes/Particle.PID"].array(library="np")
+status_refs   = f["Delphes/Particle.Status"].array(library="np")
+px_refs       = f["Delphes/Particle.Px"].array(library="np")
+py_refs       = f["Delphes/Particle.Py"].array(library="np")
+pz_refs       = f["Delphes/Particle.Pz"].array(library="np")
+e_refs        = f["Delphes/Particle.E"].array(library="np")
+
+h_n50_p = ROOT.TH2D(f"h_n50_p","",10,0,250,40,0,20)
+h_n80_p = ROOT.TH2D(f"h_n80_p","",10,0,250,40,0,20)
+h_n90_p = ROOT.TH2D(f"h_n90_p","",10,0,250,30,0,30)
+h_n95_p = ROOT.TH2D(f"h_n95_p","",10,0,250,30,0,30)
+h_n99_p = ROOT.TH2D(f"h_n99_p","",10,0,250,30,0,30)
+
 # Loop over all events
-for entry in range(0, numberOfEntries):
+for entry, event in enumerate(jetconst_refs[:]):
+    # for entry in range(0, numberOfEntries):
     # Load selected branches with data from specified event
     treeReader.ReadEntry(entry)
 
@@ -80,6 +111,11 @@ for entry in range(0, numberOfEntries):
         highestEnergyParticle = 0
         particleIndex = -1
         highestEnergyPID = 0
+
+        # Plot GenGet.M() and then throw away GenJets that have a low mass
+        histGenJetM.Fill(GenJet.Mass)
+        if GenJet.Mass < 0.01:
+            continue
 
         # Determines if a parton initiated the jet
         for iparticle in range(branchParticle.GetEntries()):
@@ -104,10 +140,66 @@ for entry in range(0, numberOfEntries):
         if highestEnergyPID == 21:
             continue
 
-        # Plot GenGet.M() and then throw away GenJets that have a low mass
-        histGenJetM.Fill(GenJet.Mass)
-        if GenJet.Mass < 0.01:
+        # Find jet four vector
+        jetp4 = ROOT.TLorentzVector()
+        jetp4.SetPtEtaPhiM(
+            jetpt_refs[entry][ijet],
+            jeteta_refs[entry][ijet],
+            jetphi_refs[entry][ijet],
+            jetm_refs[entry][ijet],
+        )
+
+        # Throw away nonisolated jets
+        isIsolated = True
+        for jjet in range(branchGenJet.GetEntries()):
+            if jjet == ijet:
+                continue
+            jjetp4 = ROOT.TLorentzVector()
+            jjetp4.SetPtEtaPhiM(
+                jetpt_refs[entry][jjet],
+                jeteta_refs[entry][jjet],
+                jetphi_refs[entry][jjet],
+                jetm_refs[entry][jjet],
+            )
+            if jetp4.DeltaR(jjetp4) < 0.8:
+                isIsolated = False
+                break
+        if not isIsolated:
             continue
+
+        const_indices = [x - 1 for x in list(event[ijet])]
+
+        listOfConstituentMomenta = []
+        for tmpconst in const_indices:
+            tmp_p4 = ROOT.TLorentzVector(
+                px_refs[entry][tmpconst],
+                py_refs[entry][tmpconst],
+                pz_refs[entry][tmpconst],
+                e_refs [entry][tmpconst],
+                )
+            listOfConstituentMomenta.append(tmp_p4)
+
+        listOfConstituentMomenta = sorted(listOfConstituentMomenta, key=lambda x: x.E(), reverse=True)
+        runningp4sum = ROOT.TLorentzVector()
+
+        tmpGraph = ROOT.TGraph(len(listOfConstituentMomenta))
+
+        for i, tmpconst in enumerate(listOfConstituentMomenta):
+            runningp4sum += tmpconst
+            try:
+                index = math.floor(jetp4.E() / 50)
+                # h_jetfrag[index*50].Fill(i,runningp4sum.E() / jetp4.E() )
+            except:
+                pass
+
+            tmpGraph.SetPoint(i, runningp4sum.E() / jetp4.E(), i)
+
+        h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
+        h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
+        h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
+        h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
+        h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+
 
         # Plot GenJet transverse momentum
         P = GenJet.PT * math.cosh(GenJet.Eta)
@@ -121,6 +213,16 @@ for entry in range(0, numberOfEntries):
             print("GenJet.P ", GenJet.P)
             print("GenJet.Particles ", GenJet.Particles)
             print("GenJet.NCharged ", GenJet.NCharged)
+
+for thing in [h_n50_p, h_n80_p, h_n90_p, h_n95_p, h_n99_p]:
+    thing.Smooth()
+    thing.SetFillColor(ROOT.kRed)
+    thing.SetFillStyle(2)
+    thing.Write()
+    thing.ProfileX().Write()
+    thing.QuantilesX(0.5).Write()
+    thing.QuantilesX(0.25).Write()
+    thing.QuantilesX(0.75).Write()
 
 # Show resulting histograms
 c0 = ROOT.TCanvas()
@@ -137,6 +239,31 @@ c0.Clear()
 c0.Update()
 histGenJetM.Draw()
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetMass.png")
+c0.Clear()
+
+c0.Update()
+h_n50_p.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_h_n50_p.png")
+c0.Clear()
+
+c0.Update()
+h_n80_p.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_h_n80_p.png")
+c0.Clear()
+
+c0.Update()
+h_n90_p.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_h_n90_p.png")
+c0.Clear()
+
+c0.Update()
+h_n95_p.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_h_n95_p.png")
+c0.Clear()
+
+c0.Update()
+h_n99_p.Draw()
+c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_h_n99_p.png")
 c0.Clear()
 
 c0.Update()
@@ -165,6 +292,11 @@ savehist(histPartVsPT, "PartVsPT")
 savehist(histGenJetPT, "GenJetPT")
 savehist(pt_profx, "PartVsPTprofx")
 savehist(histGenJetM, "GenJetMass")
+savehist(h_n50_p, "h_n50_p")
+savehist(h_n80_p, "h_n80_p")
+savehist(h_n90_p, "h_n90_p")
+savehist(h_n95_p, "h_n95_p")
+savehist(h_n99_p, "h_n99_p")
 
 
 print("Done!")
