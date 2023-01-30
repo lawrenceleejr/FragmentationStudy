@@ -3,18 +3,17 @@
 import sys
 import ROOT
 import math
+import numpy as np
+# import uproot
 
 
-def savehist(hist, histname):
-    """At the end of the function, there are no more references to `file`.
-    The `TFile` object gets deleted, which in turn saves and closes
-    the ROOT file."""
-    # myfile = ROOT.TFile.Open("histo.root", "RECREATE")
-    myfile.WriteObject(hist, histname)
-    # print("Wrote %s to histo.root"%histname)
+def closeAtDestruct(hist):
+   myFile = ROOT.TFile.Open("file.root", "RECREATE")
+   myFile.WriteObject(hist, "MyHist")
+   # At the end of the function, there are no more references to `file`.
+   # The `TFile` object gets deleted, which in turn saves and closes
+   # the ROOT file.
 
-
-printStuff = False
 
 try:
     input = raw_input
@@ -22,7 +21,7 @@ except:
     pass
 
 if len(sys.argv) < 3:
-    print(" Usage: loop.py input_file results_name")
+    print(" Usage: merge.py eeToZgamma_file eeToZgluon_file")
     sys.exit(1)
 
 print("Beginning...")
@@ -36,97 +35,47 @@ except:
 
 inputFile = sys.argv[1]
 
-# Create .root file to save histograms
-myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
+# Open .root file to use histograms
+# Path starts in Delphes directory
+eeToZgamma_file = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[1]+"_histograms.root", "READ")
+eeToZgluon_file = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root", "READ")
 
-# Create chain of root trees
-chain = ROOT.TChain("Delphes")
-chain.Add(inputFile)
+# Herwig test
+herwig_file = ROOT.TFile.Open("../FragmentationStudy/root_files/herwig_test_histograms.root", "READ")
+herwig_profx = herwig_file.PartVsPprofx
+herwig_profx.SetName("Herwig")
+# herwig_profx.SetStats(0)
+herwig_profx.SetLineColor(ROOT.kGreen)
 
-# Create object of class ExRootTreeReader
-treeReader = ROOT.ExRootTreeReader(chain)
-numberOfEntries = treeReader.GetEntries()
+eeToZgamma_profx = eeToZgamma_file.PartVsPprofx
+eeToZgluon_profx = eeToZgluon_file.PartVsPprofx
 
-# Get pointers to branches used in this analysis
-branchGenJet = treeReader.UseBranch("GenJet")
-# branchElectron = treeReader.UseBranch("Electron")
+eeToZgamma_profx.SetName("ee->Z+gamma")
+eeToZgluon_profx.SetName("ee->Z+gluon")
 
-# Book histograms
-# TH1F::TH1F(const char* name, const char* title, int nbinsx, double xlow, double xup) =>
-histGenJetP = ROOT.TH1F("GenJet_p", "GenJet P; GenJet P; #", 100, 0.0, 500.0)
-histGenJetM = ROOT.TH1F("GenJet_mass", "GenJet Mass; GenJet Mass; #", 100, 0.0, 10.0)
-# TH2F::TH2F(const char* name, const char* title, int nbinsx, double xlow, double xup, int nbinsy, double ylow,
-# double yup) =>
-histPartVsP = ROOT.TH2F(
-    "# of particles Vs p", "Number of Particles Vs GenJet P; GenJet P; # of particles",
-    100, 0.0, 500.0, 50, 0.0, 50.0)
-
-# Loop over all events
-for entry in range(0, numberOfEntries):
-    # Load selected branches with data from specified event
-    treeReader.ReadEntry(entry)
-    highPtPhoton = False
-
-    for ijet in range(branchGenJet.GetEntries()):
-        GenJet = branchGenJet.At(ijet)
-        # For Z+gamma
-        if GenJet.Mass < 0.01 and GenJet.PT > 50:
-            highPtPhoton = True
-            break
-    if not highPtPhoton:
-        continue
-
-    # If event contains at least 1 GenJet
-    # if branchGenJet.GetEntries() > 0:
-    for ijet in range(branchGenJet.GetEntries()):
-        # Take first GenJet
-        GenJet = branchGenJet.At(ijet)
-
-        # Plot GenGet.M() and then throw away GenJets that have a low mass
-        histGenJetM.Fill(GenJet.Mass)
-
-        # Plot GenJet transverse momentum
-        if GenJet.Mass < 0.01:
-            continue
-
-        P = GenJet.PT * math.cosh(GenJet.Eta)
-        histGenJetP.Fill(P)
-        histPartVsP.Fill(P, GenJet.NCharged + GenJet.NNeutrals)
-
-        # Print GenJet transverse momentum
-        if printStuff:
-            print("GenJet.P ", GenJet.P)
-            print("GenJet.Particles ", GenJet.Particles)
-            print("GenJet.NCharged ", GenJet.NCharged)
-
-# Show resulting histograms
+# Places both plots onto one canvas
 c0 = ROOT.TCanvas()
 c0.Update()
-histGenJetP.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetP.png")
+st0 = eeToZgamma_profx.GetListOfFunctions().FindObject("stats")
+st0.SetY1NDC(0.50)
+st0.SetY2NDC(0.30)
+st0.SetLineColor(ROOT.kBlue)
+ROOT.gPad.Update()
+st1 = eeToZgluon_profx.GetListOfFunctions().FindObject("stats")
+st1.SetY1NDC(0.30)
+st1.SetY2NDC(0.10)
+st1.SetLineColor(ROOT.kRed)
+ROOT.gPad.Update()
+
+eeToZgamma_profx.Draw()
+eeToZgluon_profx.SetLineColor(ROOT.kRed)
+eeToZgluon_profx.Draw("sames")
+herwig_profx.Draw("sames")
+c0.Print("../merge.png")
 c0.Clear()
 
-c0.Update()
-histGenJetM.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetMass.png")
-c0.Clear()
-
-c0.Update()
-histPartVsP.SetContour(1000)
-profx = histPartVsP.ProfileX("profilex", 0, 100)
-profx.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPprofx.png")
-# histPartVsPT.SetStats(0)
-histPartVsP.Draw("colz")
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsP.png")
-c0.Clear()
-
-# Save resulting histograms to .root file
-savehist(histPartVsP, "PartVsP")
-savehist(histGenJetP, "GenJetP")
-savehist(profx, "PartVsPprofx")
-savehist(histGenJetM, "GenJetMass")
-# savehist()
-
+# Uproot stuff
+# eeToZgamma_file = uproot.open("../FragmentationStudy/root_files/"+sys.argv[1]+"_histograms.root")
+# eeToZgluon_file = uproot.open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root")
 
 print("Done!")
