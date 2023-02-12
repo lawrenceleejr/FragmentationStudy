@@ -47,7 +47,7 @@ inputFile = sys.argv[1]
 f = uproot4.open(inputFile)
 
 # Create .root file to save histograms
-myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
+myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/violin_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
 
 # Create chain of root trees
 chain = ROOT.TChain("Delphes")
@@ -93,11 +93,11 @@ py_refs       = f["Delphes/Particle.Py"].array(library="np")
 pz_refs       = f["Delphes/Particle.Pz"].array(library="np")
 e_refs        = f["Delphes/Particle.E"].array(library="np")
 
-h_n50_p = ROOT.TH2D(f"h_n50_p","",10,0,250,40,0,20)
-h_n80_p = ROOT.TH2D(f"h_n80_p","",10,0,250,40,0,20)
-h_n90_p = ROOT.TH2D(f"h_n90_p","",10,0,250,30,0,30)
-h_n95_p = ROOT.TH2D(f"h_n95_p","",10,0,250,30,0,30)
-h_n99_p = ROOT.TH2D(f"h_n99_p","",10,0,250,30,0,30)
+h_n50_p = ROOT.TH2D(f"h_n50_p","; Jet P; n50",10,0,250,100,0,10)
+h_n80_p = ROOT.TH2D(f"h_n80_p","; Jet P; n80",10,0,250,100,0,20)
+h_n90_p = ROOT.TH2D(f"h_n90_p","; Jet P; n90",10,0,250,100,0,30)
+h_n95_p = ROOT.TH2D(f"h_n95_p","; Jet P; n95",10,0,250,100,0,30)
+h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",10,0,250,100,0,30)
 
 # Loop over all events
 for entry, event in enumerate(jetconst_refs[:]):
