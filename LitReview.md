@@ -30,3 +30,9 @@ Christopher Frye, Andrew J. Larkoski, Jesse Thaler, Kevin Zhou
 https://arxiv.org/abs/1704.06266
 
 An IRC-safe multiplicity definition we may want to look into...
+
+# An operational definition of quark and gluon jets
+
+Patrick T. Komiske (MIT, Cambridge, CTP), Eric M. Metodiev (MIT, Cambridge, CTP), Jesse Thaler (MIT, Cambridge, CTP)
+
+https://inspirehep.net/literature/1692770
