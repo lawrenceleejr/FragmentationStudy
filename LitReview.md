@@ -1,4 +1,6 @@
+## First collider quark vs gluon tagger
 
+https://arxiv.org/abs/1405.6583
 
 ## A new method to distinguish hadronically decaying boosted Z bosons from W bosons using the ATLAS detector
 
