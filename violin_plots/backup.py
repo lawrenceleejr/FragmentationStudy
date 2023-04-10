@@ -66,88 +66,85 @@ def split_violin(file_name1, name1, text1, file_name2, name2,text2, nxx,ylim):
     comb = pd.concat([d1.assign(plot=name1),d2.assign(plot=name2)],axis = 0)
     #I'm assuming that the binning for both plots is exactly the same
     final = dataframe_fixer(comb,file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1])
-    averages = final.loc[final['plot'] == name1].groupby('H').mean()
+
     print(final)
-    print(averages)
+
     fig, ax = plt.subplots()
     ax2 = ax.twiny()
     ax3 = ax.twiny()
-    color_blue = (
-            round(30/256,3),
-            round(144/256,3),
-            round(255/256,3)
-            )
-    color_orange = (    
-                    round(255/256,3),
-                    round(141/256,3),
-                    round(30/256,3)
-                    )
     sns.violinplot(data=final,x='H',y='value',hue="plot",inner=None,split=True,ax=ax,
                    cut = 30,legend=False,
                    palette= {
-                       name1:color_blue, 
-                       name2:color_orange    
-                       }
+                                name1:(
+                                        round(30/256,3),
+                                        round(144/256,3),
+                                        round(255/256,3)
+                                        ), 
+                                name2:(    
+                                        round(235/256,3),
+                                        round(150/256,3),
+                                        round(5/256,3)
+                                        )
+                                }
                    )
-    ax2.plot(final.loc[final['plot'] == name1].groupby('H').mean(),
-             color=color_blue,
-             path_effects = [path_effects.SimpleLineShadow(alpha = 0.25),
-                             path_effects.SimpleLineShadow(offset=(2,-4),alpha=0.15),
-                             path_effects.Normal()],
-             linewidth = 3.5,
-             )
-    ax2.plot(final.loc[final['plot'] == name1].groupby('H').mean(),"o-",markersize=10,
-             linestyle='None',markeredgecolor=color_blue,markerfacecolor='white')
-    ax3.plot(final.loc[final['plot'] == name2].groupby('H').mean(),
-             color=color_orange,
-             path_effects = [path_effects.SimpleLineShadow(alpha = 0.25),
-                             path_effects.SimpleLineShadow(offset=(2,-4),alpha=0.15),
-                             path_effects.Normal()],
-             linewidth = 3.5
-
-             )   
-    ax3.plot(final.loc[final['plot'] == name2].groupby('H').mean(), "o-",markersize=10,
-             linestyle='None',markeredgecolor=color_orange,markerfacecolor='white')
-    plt.text(0.019, 0.6, text1,
-             rotation=90., 
-             fontdict={'family': 'serif',
-                       'color': color_blue, 
-                       'weight': 'normal',
-                       'size': 24,
-                       },
-             transform = ax.transAxes
-             )
-    plt.text(0.059, 0.6, text2, 
-             rotation=90.,
-             fontdict={'family': 'serif',
-                       'color': color_orange, 
-                       'weight': 'normal',
-                       'size': 24,
-                       },
-             transform = ax.transAxes
-             )
-    ax.legend([],[], frameon=False)
-    ax.set(xlabel="Jet P [GeV]",ylabel=r'$n_{'+str(nxx)+'}$',title='')
-    xlbl = ax.xaxis.get_label()
-    xlbl.set_fontsize(24)
-    ylbl = ax.yaxis.get_label()
-    ylbl.set_fontsize(24)
+    sns.regplot(data=final.loc[final['plot'] == name1],x='H',y='value',scatter=False,ax=ax2,
+                line_kws={"path_effects": [path_effects.SimpleLineShadow(),path_effects.Normal()]},
+                ci=None,
+                color=( 
+                        round(30/256,3),
+                        round(144/256,3),
+                        round(255/256,3)
+                       )
+                )
+    sns.regplot(data=final.loc[final['plot'] == name2],x='H',y='value',scatter=False,ax=ax3,
+                line_kws={"path_effects": [path_effects.SimpleLineShadow(), path_effects.Normal()]},
+                ci=None,
+                color=( 
+                        round(235/256,3), 
+                        round(150/256,3), 
+                        round(5/256,3)
+                       )
+                )
     ax2.grid(False)
     ax2.set(xlabel=None,ylabel=None)
     ax2.tick_params(axis = 'x',which='both',bottom=False,top=False,labelbottom=False,labeltop=False)
     ax3.grid(False)
     ax3.set(xlabel=None,ylabel=None)
     ax3.tick_params(axis = 'x',which='both',bottom=False,top=False,labelbottom=False,labeltop=False)
+    ax.set(xlabel="Jet P [GeV]",ylabel=r'$n_{'+str(nxx)+'}$',title=name1 +" vs "+ name2+", " + r'$n_{'+str(nxx)+'}$')
+    plt.text(6.5, 13, text1,
+             rotation=90., 
+             fontdict={'family': 'serif',
+                       'color': ( 
+                                 round(30/256,3),
+                                 round(144/256,3),
+                                 round(255/256,3)
+                                 ),
+                       'weight': 'normal',
+                       'size': 16,
+                       }
+             )
+    plt.text(15, 13, text2, 
+             rotation=90.,
+             fontdict={'family': 'serif',
+                       'color': (
+                           round(235/256,3),
+                           round(150/256,3),
+                           round(5/256,3)
+                           ),
+                       'weight': 'normal',
+                       'size': 16,
+                       })
+    ax.legend([],[], frameon=False)
     x_labels = []
     for i in range(0, len(file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1]) - 1):
         x_labels.append(str(int(file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1][i]))+
                         "-"+str(int(file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1][i+1]))) 
     ax.tick_params(axis = 'x',which='both',top=False,labeltop=False)
-    ax.set_xticklabels(x_labels, fontsize = 15)
-    ax.tick_params(axis='y', which='major', labelsize=17)
+    ax.set_xticklabels(x_labels)
     plt.gca().set_ylim(bottom=0,top=ylim)
+    plt.tick_params(axis = 'x',which='both',bottom=False,top=False,labelbottom=False,labeltop=False)
     plt.gcf().set_size_inches(15.5, 8.5)
-    plt.tight_layout()
     plt.savefig('plot_images/'+ file_name1+"_v_"+file_name2 + '_'+"n"+str(nxx)+'.png')
     plt.close()
 
