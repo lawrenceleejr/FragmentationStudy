@@ -46,3 +46,7 @@ https://arxiv.org/pdf/hep-ph/0212264.pdf
 # And a followup to the above
 
 https://inspirehep.net/literature/929709
+
+# Talks about the color dipole rest frame a lot
+
+https://arxiv.org/pdf/1710.00391.pdf
