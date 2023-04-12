@@ -38,3 +38,7 @@ An IRC-safe multiplicity definition we may want to look into...
 Patrick T. Komiske (MIT, Cambridge, CTP), Eric M. Metodiev (MIT, Cambridge, CTP), Jesse Thaler (MIT, Cambridge, CTP)
 
 https://inspirehep.net/literature/1692770
+
+# Paper on UDD epsilon color structure
+
+https://arxiv.org/pdf/hep-ph/0212264.pdf
