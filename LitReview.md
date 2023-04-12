@@ -42,3 +42,7 @@ https://inspirehep.net/literature/1692770
 # Paper on UDD epsilon color structure
 
 https://arxiv.org/pdf/hep-ph/0212264.pdf
+
+# And a followup to the above
+
+https://inspirehep.net/literature/929709
