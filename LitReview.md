@@ -50,3 +50,7 @@ https://inspirehep.net/literature/929709
 # Talks about the color dipole rest frame a lot
 
 https://arxiv.org/pdf/1710.00391.pdf
+
+# Lund jet plane for BSM searches (I think this is exactly the same effect)
+
+https://arxiv.org/abs/2112.09650
