@@ -54,3 +54,12 @@ https://arxiv.org/pdf/1710.00391.pdf
 # Lund jet plane for BSM searches (I think this is exactly the same effect)
 
 https://arxiv.org/abs/2112.09650
+
+# On the Topic of Jets: Disentangling Quarks and Gluons at Colliders
+
+https://arxiv.org/pdf/1802.00008.pdf
+
+"Of course, there are well-known caveats to this picture of jet generation, which go under the name of “sample dependence”. For instance, “quark” jets from the Z+jet process are not exactly identical to “quark” jets from the dijet process due to soft color correlations with the entire event [37], though these correlations are power suppressed in the small-jet-radius limit [41–43]."
+
+
+"Here, we assume that sample-dependent effects can either be quantified or mitigated, taking Eq. (2) as the starting assumption for our analysis."
