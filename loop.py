@@ -99,8 +99,14 @@ h_n90_p = ROOT.TH2D(f"h_n90_p","; Jet P; n90",10,0,250,100,0,30)
 h_n95_p = ROOT.TH2D(f"h_n95_p","; Jet P; n95",10,0,250,100,0,30)
 h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",10,0,250,100,0,30)
 
+total = len(jetconst_refs[:])
+print("Total number of events: ", total)
+
 # Loop over all events
 for entry, event in enumerate(jetconst_refs[:]):
+    #print(entry)
+    if entry >= 50000:
+        break
     # for entry in range(0, numberOfEntries):
     # Load selected branches with data from specified event
     treeReader.ReadEntry(entry)
@@ -168,9 +174,18 @@ for entry, event in enumerate(jetconst_refs[:]):
             continue
 
         const_indices = [x - 1 for x in list(event[ijet])]
+        # print("list(event[ijet]): ", list(event[ijet]))
+        #print("ijet: ", ijet)
+        # print("event[ijet]: ", event[ijet])
+        #print("list(event[ijet]): ", list(event[ijet]))
+        #print("const_indices: ", const_indices)
+        #print("px_refs length: ", len(px_refs[entry]))
+        #print("px_refs: ", px_refs[entry])
 
         listOfConstituentMomenta = []
         for tmpconst in const_indices:
+            #print("tmpconst: ", tmpconst)
+            #print("px_refs[entry][tmpconst]: ", px_refs[entry][tmpconst])
             tmp_p4 = ROOT.TLorentzVector(
                 px_refs[entry][tmpconst],
                 py_refs[entry][tmpconst],
@@ -223,9 +238,10 @@ for thing in [h_n50_p, h_n80_p, h_n90_p, h_n95_p, h_n99_p]:
     thing.QuantilesX(0.5).Write()
     thing.QuantilesX(0.25).Write()
     thing.QuantilesX(0.75).Write()
-
+'''
 # Show resulting histograms
 c0 = ROOT.TCanvas()
+
 c0.Update()
 histGenJetP.Draw()
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_GenJetP.png")
@@ -283,6 +299,12 @@ c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
 histPartVsPT.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
 c0.Clear()
+'''
+
+histPartVsP.SetContour(1000)
+profx = histPartVsP.ProfileX("profilex", 0, 100)
+histPartVsPT.SetContour(1000)
+pt_profx = histPartVsPT.ProfileX("profilex", 0, 100)
 
 # Save resulting histograms to .root file
 savehist(histPartVsP, "PartVsP")
