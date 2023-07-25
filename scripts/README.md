@@ -1,25 +1,40 @@
-Run on LHE file and produce hepmc file
+# README
 
-2 steps:
-1. Read an input file (config file) and creates a run file
+## Run on LHE file and produce hepmc file
+
+<!--### HERWIG
+
+1. Read an input file (config file) and creates a run file named `LHE.run`
     ```bash
-    ./scripts/herwig.sh read configs/herwig_lhe.in
+    cd scripts
+    ./herwig.sh read herwig_lhe.in
     ```
-2. Step produced `LHE.run` file, the next step reads the run file and generates events. The result is saved in an `hepmc` file.
+2. Once `LHE.run` file is created, the next step reads the run file and generates events. The result is saved in an `hepmc` file.
     ```bash
     ./scripts/herwig.sh run LHE.run -N 50000
-    ```
-Make tree using Delphes that reads the `hepmc` file.
+    ```-->
+
+### PYTHIA
+
+Run using vincia shower
 ```bash
-./scripts/delphes.sh card.tcl output.root MG5-Herwig_events.hepmc
+./run_pythia
+```
+To run pythia shower use `./run_pythia 1`
+
+The above will create HEPMC file with same basename as LHE input file that is defined inside ` run_pythia`.
+
+
+## Run on HEPMC file and produce ROOT TREE
+
+
+Make ROOT tree using Delphes that reads the `hepmc` file.
+```bash
+./run_delphes card.tcl input_hepmc_file
 ```
 
-Make tree using Delphes that reads the `hepmc` file.
-```bash
-./scripts/delphes.sh card.tcl output.root MG5-Herwig_events.hepmc
-```
+## Run loop.py
 
-You can use `./scripts/delphes.sh` to run pyroot script that produce plots
 ```bash
-./scripts/delphes.sh loop.py output.root herwig
+./run_delphes loop.py input_root_file results_name
 ```
