@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+import os,sys
+
+def RunOnHepMC(CARD_TCL, HEPMC_FILE):
+    IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
+    #IMAGE='gitlab-registry.cern.ch/scipp/mario-mapyde/delphes-snowmass:master'
+    ROOT_FILE = HEPMC_FILE.split("/")[-1].replace(".hepmc",".root")
+    EXECUTOR="/usr/local/share/delphes/delphes/DelphesHepMC3 {} {} {};".format(CARD_TCL, ROOT_FILE, HEPMC_FILE)
+    CMD="docker run -i --rm  -u `id -u $USER`:`id -g` -v $PWD:$PWD -w $PWD {} '{}'".format(IMAGE,EXECUTOR)
+
+    ## if ROOT_FILE exisits remove it
+    if os.path.isfile(ROOT_FILE): 
+        print("removing existing file: "+ROOT_FILE)
+        os.system("rm -f "+ROOT_FILE)
+    
+    os.system(CMD)
+
+def RunOnROOT(PYTHON_SCRIPT, ROOT_FILE,PREFIX):
+    IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
+    INSTALLER="pip install --user awkward uproot;"
+    EXECUTOR="python {} {} {};".format(PYTHON_SCRIPT, ROOT_FILE, PREFIX)
+    CMD="docker run -i --rm -v $PWD:$PWD -w $PWD {} '{} {}'".format(IMAGE,INSTALLER,EXECUTOR)
+
+    os.system(CMD)
+
+if len(sys.argv)<2:
+    print("Missing arguments")
+elif sys.argv[1].endswith('.tcl'):
+    RunOnHepMC(sys.argv[1],sys.argv[2])
+elif sys.argv[1].endswith('.py'):
+    RunOnROOT(sys.argv[1],sys.argv[2], sys.argv[3])
+else:
+    print("Wrong arguments")
