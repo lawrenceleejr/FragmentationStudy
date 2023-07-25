@@ -4,7 +4,6 @@ import os,sys
 
 def RunOnHepMC(CARD_TCL, HEPMC_FILE):
     IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
-    #IMAGE='gitlab-registry.cern.ch/scipp/mario-mapyde/delphes-snowmass:master'
     ROOT_FILE = HEPMC_FILE.split("/")[-1].replace(".hepmc",".root")
     EXECUTOR="/usr/local/share/delphes/delphes/DelphesHepMC3 {} {} {};".format(CARD_TCL, ROOT_FILE, HEPMC_FILE)
     CMD="docker run -i --rm  -u `id -u $USER`:`id -g` -v $PWD:$PWD -w $PWD {} '{}'".format(IMAGE,EXECUTOR)
@@ -18,8 +17,8 @@ def RunOnHepMC(CARD_TCL, HEPMC_FILE):
 
 def RunOnROOT(PYTHON_SCRIPT, ROOT_FILE,PREFIX):
     IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
-    INSTALLER="pip install --user awkward uproot;"
-    EXECUTOR="python {} {} {};".format(PYTHON_SCRIPT, ROOT_FILE, PREFIX)
+    INSTALLER='pip3 install numpy uproot4; printf "************\n";'
+    EXECUTOR="python3 {} {} {};".format(PYTHON_SCRIPT, ROOT_FILE, PREFIX)
     CMD="docker run -i --rm -v $PWD:$PWD -w $PWD {} '{} {}'".format(IMAGE,INSTALLER,EXECUTOR)
 
     os.system(CMD)
