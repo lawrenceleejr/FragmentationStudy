@@ -37,9 +37,12 @@ Run using vincia shower
 ```bash
 ./run_pythia
 ```
-To run pythia shower use `./run_pythia 1`
 
-The above will create HEPMC file with same basename as LHE input file that is defined inside ` run_pythia`.
+The above command compile and run `main00.cc`. The main command is `./main00 -e -1 -s {} -f {}`, where `-e` is number of events (`-1` over all generated events), and `-s` for shower mode and `-f` for LHE input file.
+
+The output is HEPMC file with same basename as LHE input file defined inside ` run_pythia`.
+
+Note: To run pythia shower use `./run_pythia 1`
 
 
 ## Run on HEPMC file and produce ROOT TREE
