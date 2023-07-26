@@ -3,7 +3,7 @@
 import os,sys
 
 shower = 2 #using vincia (default)
-if len(sys.argv)>1 and sys.argv[1]==1:
+if len(sys.argv)>1 and sys.argv[1]=="1":
     shower = 1 #using pythia shower
     print("Using pythia shower")
 else:
@@ -11,11 +11,12 @@ else:
 
 
 def RunOn(LHEF):
-    IMAGE='matthewfeickert/pythia-python:latest'
+    ##IMAGE='matthewfeickert/pythia-python:latest'
+    IMAGE='matthewfeickert/pythia-python:pythia8.308-hepmc2.06.11-fastjet3.4.0-python3.10'
 
     COMPILER="g++ main00.cc -o main00 -I/usr/local/venv/include -O2 -pedantic -W -Wall -Wshadow -fPIC -pthread \
         -std=c++14 -DGZIP -lz -L/usr/local/venv/lib -Wl,-rpath,/usr/local/venv/lib -lpythia8 -ldl \
-        -I/usr/local/venv/include -L/usr/local/venv/lib -Wl,-rpath,/usr/local/venv/lib -lHepMC3 -DHEPMC3;"
+        -I/usr/local/venv/include -L/usr/local/venv/lib -Wl,-rpath,/usr/local/venv/lib -lHepMC -DHEPMC2;"
 
     EXECUTOR="./main00 -e -1 -s {} -f {};".format(shower, LHEF)
 
@@ -29,7 +30,12 @@ def RunOn(LHEF):
 
 localtest=False
 
-LHE = ['/userdata/FragmentationStudy/data/50k_events/eeToJJJ_50k_unweighted_events.lhe.gz']
+LHE = []
+LHE+= ['/userdata/FragmentationStudy/data/50k_events/eeToJJJ_50k_unweighted_events.lhe.gz']
+LHE+= ['/userdata/FragmentationStudy/data/50k_events/eeToZgamma_50k_unweighted_events.lhe.gz']
+LHE+= ['/userdata/FragmentationStudy/data/50k_ZZ_1TeV_events/eeToZZtoJJ_50k_1TeV_unweighted_events.lhe.gz']
+
+MyStorage='/userdata/FragmentationStudy/enibigir/default'
 
 for i,f in enumerate(LHE):
     path, lhe = os.path.split(f)
@@ -37,3 +43,4 @@ for i,f in enumerate(LHE):
     RunOn(lhe)
     if not localtest: os.system('rm {}'.format(lhe))
     ##os.system('mv {} {}/'.format(ff,path))
+    ##os.system('mv {} {}/'.format(lhe.replace('.lhe.gz','.hepmc'),MyStorage))

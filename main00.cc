@@ -36,7 +36,7 @@ public:
     for (int i = 1; i < argc; ++i) arglist.push_back(string(argv[i]));
   }
 
-  const string& getOption(const string &opt) const {
+  const string getOption(const string &opt) const {
     vector<string>::const_iterator itr = find(arglist.begin(),
       arglist.end(), opt);
     if (itr != arglist.end() && ++itr != arglist.end()) return *itr;
@@ -86,15 +86,19 @@ int main(int argc, char* argv[]) {
   pythia.readString("Beams:frameType = 4");
   pythia.readString("Beams:LHEF = "+lhefile);
   pythia.readString("Init:showAllParticleData = off");
-  pythia.readString("Next:numberCount = 1000");
+  pythia.readString("Next:numberCount = 5000");
   pythia.readString("PhaseSpace:pTHatMin = 20.");
   pythia.readString("Next:numberShowInfo = 0");
   pythia.readString("Next:numberShowProcess = 1");
   pythia.readString("Next:numberShowEvent = 1");
-  pythia.readString("PartonLevel:MPI = on");  //default = on
-  pythia.readString("PartonLevel:ISR = off"); //default = on
-  pythia.readString("PartonLevel:FSR = off"); //default = on
-  pythia.readString("HadronLevel:all = on");  //default = on
+  //pythia.readString("PartonLevel:MPI = off");  //default = on
+  //pythia.readString("PartonLevel:ISR = off"); //default = on
+  //pythia.readString("PartonLevel:FSR = off"); //default = on
+  //pythia.readString("HadronLevel:all = off");  //default = on
+  //pythia.readString("JetMatching:qCut         = -1.0");
+  //pythia.readString("JetMatching:doShowerKt   = off");
+  //pythia.readString("JetMatching:nJetMax      = -1");
+  //pythia.readString("Merging:nJetMax  		    = -1");
   if (shower_model==2){
   // VINCIA settings: https://vincia.hepforge.org/current/share/Vincia/htmldoc/VinciaShower.html
     pythia.readString("PartonShowers:model   = 2");
