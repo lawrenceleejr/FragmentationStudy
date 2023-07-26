@@ -5,7 +5,7 @@ import os,sys
 def RunOnHepMC(CARD_TCL, HEPMC_FILE):
     IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
     ROOT_FILE = HEPMC_FILE.split("/")[-1].replace(".hepmc",".root")
-    EXECUTOR="/usr/local/share/delphes/delphes/DelphesHepMC3 {} {} {};".format(CARD_TCL, ROOT_FILE, HEPMC_FILE)
+    EXECUTOR="/usr/local/share/delphes/Delphes-3.5.0/DelphesHepMC2 {} {} {};".format(CARD_TCL, ROOT_FILE, HEPMC_FILE)
     CMD="docker run -i --rm  -u `id -u $USER`:`id -g` -v $PWD:$PWD -w $PWD {} '{}'".format(IMAGE,EXECUTOR)
 
     ## if ROOT_FILE exisits remove it
@@ -19,7 +19,7 @@ def RunOnROOT(PYTHON_SCRIPT, ROOT_FILE,PREFIX):
     IMAGE='ghcr.io/scipp-atlas/mario-mapyde/delphes'
     INSTALLER='pip3 install numpy uproot4; printf "************\n";'
     EXECUTOR="python3 {} {} {};".format(PYTHON_SCRIPT, ROOT_FILE, PREFIX)
-    CMD="docker run -i --rm -v $PWD:$PWD -w $PWD {} '{} {}'".format(IMAGE,INSTALLER,EXECUTOR)
+    CMD="docker run -i --rm -v $PWD:$PWD -v /userdata/FragmentationStudy/enibigir/:/userdata/FragmentationStudy/enibigir/ -w $PWD {} '{} {}'".format(IMAGE,INSTALLER,EXECUTOR)
 
     os.system(CMD)
 
