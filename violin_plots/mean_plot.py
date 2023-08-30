@@ -134,7 +134,7 @@ def mean_plot(file_name1, name1, text1, file_name2, name2,text2, nxx,ylim=10,xli
                        },
              transform = ax.transAxes
              )
-    ax.set(xlabel="Jet P [GeV]",ylabel=r'$ \langle n_{'+str(nxx)+r'} \rangle $',title='')
+    ax.set(xlabel="Jet p [GeV]",ylabel=r'$ \langle n_{'+str(nxx)+r'} \rangle $',title='')
     xlbl = ax.xaxis.get_label()
     xlbl.set_fontsize(26)
     ylbl = ax.yaxis.get_label()

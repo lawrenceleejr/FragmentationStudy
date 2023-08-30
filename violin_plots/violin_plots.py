@@ -146,7 +146,7 @@ def split_violin(file_name1, name1, text1, file_name2, name2,text2, nxx,ylim,fla
     ax3.set(xlabel=None,ylabel=None)
     ax3.tick_params(axis = 'x',which='both',bottom=False,top=False,labelbottom=False,labeltop=False)
     if(flag != True):
-        ax.set(xlabel="Jet P [GeV]")
+        ax.set(xlabel="Jet p [GeV]")
         x_labels = []
         for i in range(0, len(file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1]) - 1):
             x_labels.append(str(int(file1["h_"+"n"+str(nxx)+"_p;1"].to_numpy()[1][i]))+
