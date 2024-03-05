@@ -250,20 +250,22 @@ histPartVsPTg.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTg.png")
 c0.Clear()
 
+
+
 c0.Update()
-pt_projy = histPartVsPT.ProjectionY("projectionY", histPartVsPT.FindBin(200,0,0), histPartVsPT.FindBin(250,0,0) )
+pt_projy = histPartVsPT.ProjectionY("projectionY", histPartVsPT.GetXaxis().FindBin(200), histPartVsPT.GetXaxis().FindBin(250) )
 pt_projy.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprojY.png")
 c0.Clear()
 
 c0.Update()
-pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(200), histPartVsPTg.GetXaxis().FindBin(250) )
+pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(22), histPartVsPTg.GetXaxis().FindBin(22) )
 pt_projyg.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprojYg.png")
 c0.Clear()
 
 c0.Update()
-pt_projyq = histPartVsPTq.ProjectionY("projectionYq", 0, 10 )
+pt_projyq = histPartVsPTq.ProjectionY("projectionYq", histPartVsPTq.GetXaxis().FindBin(200), histPartVsPTq.GetXaxis().FindBin(250) )
 pt_projyq.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprojYq.png")
 c0.Clear()
