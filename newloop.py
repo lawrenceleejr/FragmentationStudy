@@ -256,14 +256,17 @@ c0.Update()
 pt_projy = histPartVsPT.ProjectionY("projectionY", histPartVsPT.GetXaxis().FindBin(200), histPartVsPT.GetXaxis().FindBin(250) )
 pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(200), histPartVsPTg.GetXaxis().FindBin(250) )
 pt_projyq = histPartVsPTq.ProjectionY("projectionYq", histPartVsPTq.GetXaxis().FindBin(200), histPartVsPTq.GetXaxis().FindBin(250) )
-pt_projy.SetLineColor(2)
+pt_projy.Scale(1)
+pt_projyg.Scale(1)
+pt_projy.SetLineColor(1)
+pt_projyg.SetLineColor(2)
+pt_projyq.SetLineColor(3)
 pt_projy.Draw("hist 1")
 pt_projyg.Draw("hist 1 same")
 pt_projyq.Draw("hist 1 same")
 
 
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_YprojectionALL.png")
-
 c0.Clear()
 
 
