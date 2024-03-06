@@ -53,6 +53,8 @@ Make ROOT tree using Delphes that reads the `hepmc` file.
 ./run_delphes card.tcl input_hepmc_file
 ```
 
+## newloop.py
+
 ## Run loop.py
 
 ```bash
