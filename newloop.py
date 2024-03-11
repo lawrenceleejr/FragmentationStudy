@@ -76,17 +76,17 @@ histhighestID = ROOT.TH1F("highestID", "highestID; HighestID", 300, -500.0, 500.
 
 histPartVsPT = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PT; GenJet PT; # of particles",
-    100, 0.0, 500.0, 50, 0.0, 50.0)
+    100, 0.0, 500.0, 50, 0.0, 80.0)
 
 histPartVsPTq = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PTq; GenJet PT; # of part\
 icles",
-    100, 0.0, 500.0, 50, 0.0, 50.0)
+    100, 0.0, 500.0, 50, 0.0, 80.0)
 
 histPartVsPTg = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PTg; GenJet PT; # of part\
 icles",
-    100, 0.0, 500.0, 50, 0.0, 50.0)
+    100, 0.0, 500.0, 50, 0.0, 80.0)
 
 jetconst_refs = f["Delphes/GenJet.Particles"].array(library="np")
 jetpt_refs    = f["Delphes/GenJet.PT"].array(library="np")
@@ -226,7 +226,7 @@ c0.Update()
 histPartVsPT.SetContour(1000)
 pt_profx = histPartVsPT.ProfileX("profilex", 0, 100)
 #pt_profx.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
+#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
 histPartVsPT.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
 c0.Clear()
@@ -235,7 +235,7 @@ c0.Update()
 histPartVsPTq.SetContour(1000)
 pt_profxq = histPartVsPTq.ProfileX("profilexq", 0, 100)
 #pt_profxq.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxq.png")
+#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxq.png")
 histPartVsPTq.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTq.png")
 c0.Clear()
@@ -244,7 +244,7 @@ c0.Update()
 histPartVsPTg.SetContour(1000)
 pt_profxg = histPartVsPTg.ProfileX("profilexg", 0, 100)
 #pt_profxg.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxg.png")
+#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxg.png")
 histPartVsPTg.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTg.png")
 c0.Clear()
@@ -253,10 +253,14 @@ c0.Clear()
 
 c0.Update()
 pt_projy = histPartVsPT.ProjectionY("projectionY", histPartVsPT.GetXaxis().FindBin(200), histPartVsPT.GetXaxis().FindBin(250) )
-pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(200), histPartVsPTg.GetXaxis().FindBin(250) )
+pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(200),histPartVsPTg.GetXaxis().FindBin(250) )
 pt_projyq = histPartVsPTq.ProjectionY("projectionYq", histPartVsPTq.GetXaxis().FindBin(200), histPartVsPTq.GetXaxis().FindBin(250) )
-pt_projy.Scale(1/pt_projy.Integral(),"width")
-pt_projyg.Scale(1/pt_projyg.Intrgral(),"width")
+pt_projy.Scale(1.0/pt_projy.Integral() )
+pt_projyg.Scale(1.0/pt_projyg.Integral() )
+pt_projyq.Scale(1.0/pt_projyq.Integral() )
+print( pt_projy.Integral() )
+print( pt_projyg.Integral() ) 
+print( pt_projyq.Integral() )
 pt_projy.SetLineColor(1)
 pt_projyg.SetLineColor(2)
 pt_projyq.SetLineColor(3)
