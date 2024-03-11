@@ -69,24 +69,24 @@ partonID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 21, -1, -2, -3, -4, -5, -6, -7, -8, -9, -
 deltaRMax = 0.4
 
 # TH1F::TH1F(const char* name, const char* title, int nbinsx, double xlow, double xup) =>
-histhighestID = ROOT.TH1F("highestID", "highestID; HighestID", 300, -500.0, 500.0)
+histhighestID = ROOT.TH1F("highestID", "highestID; HighestID", 300, -50.0, 50.0)
 
 # TH2F::TH2F(const char* name, const char* title, int nbinsx, double xlow, double xup, int nbinsy, double ylow,
 # double yup) =>
 
 histPartVsPT = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PT; GenJet PT; # of particles",
-    100, 0.0, 500.0, 50, 0.0, 80.0)
+    100, 0.0, 500.0, 50, 0.0, 100.0)
 
 histPartVsPTq = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PTq; GenJet PT; # of part\
 icles",
-    100, 0.0, 500.0, 50, 0.0, 80.0)
+    100, 0.0, 500.0, 50, 0.0, 100.0)
 
 histPartVsPTg = ROOT.TH2F(
     "# of particles Vs pt", "Number of Particles Vs GenJet PTg; GenJet PT; # of part\
 icles",
-    100, 0.0, 500.0, 50, 0.0, 80.0)
+    100, 0.0, 500.0, 50, 0.0, 100.0)
 
 jetconst_refs = f["Delphes/GenJet.Particles"].array(library="np")
 jetpt_refs    = f["Delphes/GenJet.PT"].array(library="np")
