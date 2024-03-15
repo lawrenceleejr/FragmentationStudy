@@ -5,6 +5,7 @@ import ROOT
 import math
 import numpy as np
 import uproot4
+from array import array
 
 def savehist(hist, histname):
     """At the end of the function, there are no more references to `file`.
@@ -79,12 +80,12 @@ histPartVsPT = ROOT.TH2F(
     100, 0.0, 500.0, 50, 0.0, 100.0)
 
 histPartVsPTq = ROOT.TH2F(
-    "# of particles Vs pt", "Number of Particles Vs GenJet PTq; GenJet PT; # of part\
+    "# of particles Vs pt_q", "Number of Particles Vs GenJet PTq; GenJet PT; # of part\
 icles",
     100, 0.0, 500.0, 50, 0.0, 100.0)
 
 histPartVsPTg = ROOT.TH2F(
-    "# of particles Vs pt", "Number of Particles Vs GenJet PTg; GenJet PT; # of part\
+    "# of particles Vs pt_g", "Number of Particles Vs GenJet PTg; GenJet PT; # of part\
 icles",
     100, 0.0, 500.0, 50, 0.0, 100.0)
 
@@ -272,12 +273,36 @@ pt_projyq.Draw("hist 1 same")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_YprojectionALL.png")
 c0.Clear()
 
+c1 = ROOT.TCanvas('c1','ROC Curve', 100,100 )
+
+x = array('d' )
+y = array('d' )
+g1 = ROOT.TGraph( )
+#pint("Integrals:")
+for i in range(pt_projyg.GetNbinsX()):
+    #print(i)
+    x.append( pt_projyg.Integral(i,pt_projyg.GetNbinsX()+1) )
+    y.append( pt_projyq.Integral(i,pt_projyg.GetNbinsX()+1) )
+    g1.SetPoint( i ,  x[i], y[i] )
+    #print("g", pt_projyg.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                               
+    #print("q," pt_projyq.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                               
 
 
-c0.Update()
+g1.SetTitle( 'ROC Curve' )
+g1.GetXaxis().SetTitle( 'Gluon Eff' )
+g1.GetYaxis().SetTitle( 'Quark Eff' )
+g1.SetMarkerColor( 4 )
+g1.SetMarkerStyle( 21 )
+#c1.PaintGraph( pt_projyg.GetNbinsX() , x, y ,"AL")
+g1.Draw( 'AP' )
+c1.Update()
+g1.SaveAs("_ROC.png")
+c1.Clear()
+
+c1.Update()
 histhighestID.Draw()
-c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_highestID.png")
-c0.Clear()
+c1.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_highestID.png")
+c1.Clear()
 
 # Save resulting histograms to .root file
 savehist(histPartVsPT, "PartVsPT")
