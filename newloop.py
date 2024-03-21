@@ -6,6 +6,9 @@ import math
 import numpy as np
 import uproot4
 from array import array
+from time import sleep
+from progress.bar import Bar
+from progress.spinner import MoonSpinner
 
 def savehist(hist, histname):
     """At the end of the function, there are no more references to `file`.
@@ -102,13 +105,15 @@ py_refs       = f["Delphes/Particle.Py"].array(library="np")
 pz_refs       = f["Delphes/Particle.Pz"].array(library="np")
 e_refs        = f["Delphes/Particle.E"].array(library="np")
 
-
+print("looping...")
+ 
 # Loop over all events
+#with Bar('Processing...') as bar:
 for entry, event in enumerate(jetconst_refs[:]):
     # for entry in range(0, numberOfEntries):
     # Load selected branches with data from specified event
     treeReader.ReadEntry(entry)
-
+    
     # If event contains at least 1 GenJet
     for ijet in range(branchGenJet.GetEntries()):
         GenJet = branchGenJet.At(ijet)
@@ -215,9 +220,16 @@ for entry, event in enumerate(jetconst_refs[:]):
             histPartVsPTq.Fill(GenJet.PT, GenJet.NCharged + GenJet.NNeutrals)
         elif highestEnergyPID in partonIDg:
             histPartVsPTg.Fill(GenJet.PT, GenJet.NCharged + GenJet.NNeutrals)
-
-
-
+    #print(len(list(enumerate(jetconst_refs[:]) ) ) /2  )
+    #print(len(jetconst_refs[:]) /2 )
+    #print(ijet)
+    #print(type(ijet) )
+    #if entry  == int(len(jetconst_refs[:]) / 2  ) :
+        #print("Half Done")
+        #with Bar("Processing..") as bar:
+            #for i in range(int(len(jetconst_refs[:]) ) ):
+                #sleep(0.02)
+                #bar.next()
 
 # Show resulting histograms
 c0 = ROOT.TCanvas()
@@ -225,56 +237,46 @@ c0 = ROOT.TCanvas()
 
 c0.Update()
 histPartVsPT.SetContour(1000)
-pt_profx = histPartVsPT.ProfileX("profilex", 0, 100)
-#pt_profx.Draw()
-#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofx.png")
 histPartVsPT.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPT.png")
 c0.Clear()
 
 c0.Update()
 histPartVsPTq.SetContour(1000)
-pt_profxq = histPartVsPTq.ProfileX("profilexq", 0, 100)
-#pt_profxq.Draw()
-#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxq.png")
 histPartVsPTq.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTq.png")
 c0.Clear()
 
 c0.Update()
 histPartVsPTg.SetContour(1000)
-pt_profxg = histPartVsPTg.ProfileX("profilexg", 0, 100)
-#pt_profxg.Draw()
-#c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTprofxg.png")
 histPartVsPTg.Draw("colz")
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_PartVsPTg.png")
 c0.Clear()
 
-
-
 c0.Update()
+c0.SetTitle("Number of Particles Vs GenJet PT")
 pt_projy = histPartVsPT.ProjectionY("projectionY", histPartVsPT.GetXaxis().FindBin(200), histPartVsPT.GetXaxis().FindBin(250) )
-pt_projyg = histPartVsPTg.ProjectionY("projectionYg", histPartVsPTg.GetXaxis().FindBin(200),histPartVsPTg.GetXaxis().FindBin(250) )
-pt_projyq = histPartVsPTq.ProjectionY("projectionYq", histPartVsPTq.GetXaxis().FindBin(200), histPartVsPTq.GetXaxis().FindBin(250) )
-pt_projy.Scale(1.0/pt_projy.Integral() )
+pt_projyg = histPartVsPTg.ProjectionY("GluonProjectionY", histPartVsPTg.GetXaxis().FindBin(200),histPartVsPTg.GetXaxis().FindBin(250) )
+pt_projyq = histPartVsPTq.ProjectionY("QuarkProjectionY", histPartVsPTq.GetXaxis().FindBin(200), histPartVsPTq.GetXaxis().FindBin(250) )
+pt_projy.Scale(1.0/pt_projy.Integral(0,pt_projy.GetNbinsX()+1)  )
 pt_projyg.Scale(1.0/pt_projyg.Integral() )
 pt_projyq.Scale(1.0/pt_projyq.Integral() )
-print( pt_projy.Integral() )
+print( pt_projy.Integral(0,pt_projy.GetNbinsX()+1) )
 print( pt_projyg.Integral() ) 
 print( pt_projyq.Integral() )
 pt_projy.SetLineColor(1)
 pt_projyg.SetLineColor(2)
 pt_projyq.SetLineColor(3)
-pt_projy.Draw("hist 1")
+pt_projyq.GetMaximum(pt_projy.GetMaximum()*2)
+pt_projyq.Draw("hist 1")
 pt_projyg.Draw("hist 1 same")
-pt_projyq.Draw("hist 1 same")
+pt_projy.Draw("hist 1 same")
 
-
+c0.BuildLegend()
 c0.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_YprojectionALL.png")
 c0.Clear()
 
-c1 = ROOT.TCanvas('c1','ROC Curve', 800,800 )
-
+c1 = ROOT.TCanvas("c1",'ROC Curve', 800,800 )
 c1.SetGrid()
 
 x = array('d' )
@@ -286,9 +288,8 @@ for i in range(pt_projyg.GetNbinsX()):
     x.append( pt_projyq.Integral(i,pt_projyq.GetNbinsX()+1) )
     y.append( pt_projyg.Integral(i,pt_projyg.GetNbinsX()+1) )
     g1.SetPoint( i ,  x[i], y[i] )
-    #print("g", pt_projyg.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                               
-    #print("q," pt_projyq.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                               
-
+    #print("g", pt_projyg.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                            
+    #print("q," pt_projyq.Integral(i,pt_projyg.GetNbinsX()+1) )                                                                                
 
 g1.SetTitle( 'ROC Curve' )
 g1.GetXaxis().SetTitle( 'Eff_q' )
@@ -299,8 +300,8 @@ g1.SetMarkerColor( 1 )
 g1.SetMarkerStyle( 1 )
 g1.Draw( 'ACP' )
 c1.Print("../FragmentationStudy/plots/"+sys.argv[2]+"_ROC.pdf")
+
 c1.Update()
-#g1.SaveAs("_ROC.png")
 c1.Clear()
 
 c1.Update()
@@ -310,8 +311,8 @@ c1.Clear()
 
 # Save resulting histograms to .root file
 savehist(histPartVsPT, "PartVsPT")
-savehist(histPartVsPT, "PartVsPTq")
-savehist(histPartVsPT, "PartVsPTg")
+savehist(histPartVsPTg, "PartVsPTq")
+savehist(histPartVsPTq, "PartVsPTg")
 
 savehist(pt_projy, "PartVsPTprojY")
 savehist(pt_projyg, "PartVsPTprojYg")
