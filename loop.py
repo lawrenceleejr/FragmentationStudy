@@ -47,7 +47,7 @@ inputFile = sys.argv[1]
 f = uproot4.open(inputFile)
 
 # Create .root file to save histograms
-myfile = ROOT.TFile.Open("../FragmentationStudy/root_files/violin_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
+myfile = ROOT.TFile.Open("FragmentationStudy/root_files/violin_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
 
 # Create chain of root trees
 chain = ROOT.TChain("Delphes")
