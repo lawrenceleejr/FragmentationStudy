@@ -50,6 +50,13 @@ for i in range(num_events):
     array1 = ak.with_name(array1, "Momentum4D")
 
     cluster = fastjet.ClusterSequence(array1, jetdef)
-    print(len(cluster.inclusive_jets())) # How many jets are there?
+    print(f"Number of particles in event: ", nParticles[i])
+    print(f"Number of jets in event: ", len(cluster.inclusive_jets())) # How many jets are there?
+    print(f"Number of particles according to fastjet: ", cluster.n_particles())
+    print(f"Unclustered constituents: ", cluster.unclustered_particles())
+    print(f"Jet constituent_index: ", cluster.constituent_index())
+    print(f"Jet constituents: ", cluster.constituents())
+    print(f"Sum of all the energies in the event: ", cluster.Q())
+    print(type(cluster))
     break # Only doing one event right now, for testing
 
