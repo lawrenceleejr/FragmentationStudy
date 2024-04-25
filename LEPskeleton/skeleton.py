@@ -19,8 +19,8 @@ try:
 except:
     pass
 
-if len(sys.argv) < 2:
-    print(" Usage: skeleton.py input_root_file")
+if len(sys.argv) < 3:
+    print(" Usage: skeleton.py input_root_file output_tag")
     sys.exit(1)
 
 
@@ -28,7 +28,7 @@ for item in sys.argv[1].split("/"):
     if item.find(".root") != -1:
         output = item.split(".")[0]
 
-myfile = ROOT.TFile.Open("/wumbodrive/data/LEP/LEP2/output/"+output+"_histograms.root", "RECREATE")
+myfile = ROOT.TFile.Open("/wumbodrive/data/LEP/LEP2/output/"+output+"_"+sys.argv[2]+"_histograms.root", "RECREATE")
 
 inputFile = sys.argv[1]
 
