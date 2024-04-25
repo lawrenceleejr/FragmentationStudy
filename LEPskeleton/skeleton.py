@@ -23,7 +23,12 @@ if len(sys.argv) < 2:
     print(" Usage: skeleton.py input_root_file")
     sys.exit(1)
 
-myfile = ROOT.TFile.Open("test.root", "RECREATE")
+
+for item in sys.argv[1].split("/"):
+    if item.find(".root") != -1:
+        output = item.split(".")[0]
+
+myfile = ROOT.TFile.Open("/wumbodrive/data/LEP/LEP2/output/"+output+"_histograms.root", "RECREATE")
 
 inputFile = sys.argv[1]
 
@@ -58,11 +63,8 @@ h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",25,0,125,100,0,30)
 printStuff = False
 print("There are " + str(num_events))
 for i in range(num_events):
-<<<<<<< HEAD
-    #if i > 200:
-        #break
-=======
->>>>>>> b61ef97a0503df293457c5a7b353a9934340273e
+    if i > 200:
+        break
     temp = []
 
     for k in range(nParticles[i]):
