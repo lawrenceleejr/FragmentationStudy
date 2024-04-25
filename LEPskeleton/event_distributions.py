@@ -15,11 +15,18 @@ def event_distributions(inFile,outTag):
     f = ROOT.TFile.Open(inFile,"READ")
     tree = f.Get("t")
 
-    h1 = ROOT.TH1F("h1","mass" ,100 ,0 , 2)
+    h1 = ROOT.TH1F("h1","mass" ,100 ,0 , 0.400)
     tree.Project("h1", "mass")
-    h1.Draw()
-
     savehist(h1,"mass",myfile)
+    
+    h2 = ROOT.TH1F("h2","mass" ,100 ,0 , 0.400)
+    tree.Project("h2", "mass;pwflag==4","pwflag==4")
+    savehist(h2,"mass_photons",myfile)
+
+    h3 = ROOT.TH1F("h3","passesWW" ,5,-1,5)
+    tree.Project("h3", "passesWW")
+    savehist(h3,"passesWW",myfile)
+
 
 if __name__ == "__main__":
 	if len(sys.argv) < 3:
