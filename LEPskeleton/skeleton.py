@@ -57,8 +57,8 @@ h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",25,0,125,100,0,30)
 
 printStuff = False
 for i in range(num_events):
-    if i > 10000:
-        break
+    #if i > 200:
+        #break
     temp = []
     for k in range(nParticles[i]):
         temp_part = {}
