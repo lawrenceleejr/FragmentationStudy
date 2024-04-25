@@ -23,10 +23,33 @@ def event_distributions(inFile,outTag):
     tree.Project("h2", "mass;pwflag==4","pwflag==4")
     savehist(h2,"mass_photons",myfile)
 
-    h3 = ROOT.TH1F("h3","passesWW" ,5,-1,5)
+    h3 = ROOT.TH1F("h3","passesWW" ,2,0,1)
     tree.Project("h3", "passesWW")
     savehist(h3,"passesWW",myfile)
 
+    h31 = ROOT.TH1F("h31","passesISR" ,2,0,1)
+    tree.Project("h31", "passesISR")
+    savehist(h31,"passesISR",myfile)
+
+    h4 = ROOT.TH1F("h4","STheta" ,50,-6.3,6.3)
+    tree.Project("h4", "STheta")
+    savehist(h4,"STheta",myfile)
+
+    h5 = ROOT.TH1F("h5","cos(STheta)" ,50,-1,1)
+    tree.Project("h5", "cos(STheta)")
+    savehist(h5,"cosSTheta",myfile)
+
+    h41 = ROOT.TH1F("h41","STheta_linearized" ,50,-6.3,6.3)
+    tree.Project("h41", "STheta_linearized")
+    savehist(h41,"STheta_linearized",myfile)
+
+    h51 = ROOT.TH1F("h51","cos(STheta_linearized)" ,50,-1,1)
+    tree.Project("h51", "cos(STheta_linearized)")
+    savehist(h51,"cosSTheta_linearized",myfile)
+
+    h6 = ROOT.TH1F("h6", "missP" ,100,-50,50)
+    tree.Project("h6", "missP")
+    savehist(h6,"missP",myfile)
 
 if __name__ == "__main__":
 	if len(sys.argv) < 3:
