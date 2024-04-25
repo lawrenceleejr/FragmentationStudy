@@ -13,6 +13,21 @@ def savehist(hist, histname):
     the ROOT file."""
     myfile.WriteObject(hist, histname)
 
+def nXX_graph(jet_constituent_momenta,jet_energy):
+     jet_constituent_momenta = sorted(jet_constituent_momenta, key=lambda x: x.E(), reverse=True)
+     runningp4sum = ROOT.TLorentzVector()
+
+     tmpGraph = ROOT.TGraph(len(jet_constituent_momenta))
+
+     for i, tmpconst in enumerate(jet_constituent_momenta):
+            runningp4sum += tmpconst
+            try:
+                index = math.floor(jet_energy / 50)
+            except:
+                pass
+
+            tmpGraph.SetPoint(i, runningp4sum.E() / jet_energy, i)
+     return tmpGraph
 
 try:
     input = raw_input
@@ -36,37 +51,57 @@ f = uproot4.open(inputFile)
 tree = f["t"]
 branches = tree.arrays()
 
-px_branch = branches["px"]
-py_branch = branches["py"]
-pz_branch = branches["pz"]
-#E_branch = branches["Energy"]
-nParticles = branches["nParticle"]
-num_events = len(nParticles) # get number of events
-
-pt_branch = branches["pt"]
-eta_branch = branches["eta"]
-phi_branch = branches["phi"]
-M_branch = branches["mass"]
-
-pid_branch = branches["pid"]
-
-# https://fastjet.fr/repo/doxygen-3.4.1/classfastjet_1_1JetDefinition.html
-jetdef = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.4)
-vector.register_awkward()
-
 h_n50_p = ROOT.TH2D(f"h_n50_p","; Jet P; n50",25,0,125,100,0,10)
 h_n80_p = ROOT.TH2D(f"h_n80_p","; Jet P; n80",25,0,125,100,0,20)
 h_n90_p = ROOT.TH2D(f"h_n90_p","; Jet P; n90",25,0,125,100,0,30)
 h_n95_p = ROOT.TH2D(f"h_n95_p","; Jet P; n95",25,0,125,100,0,30)
 h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",25,0,125,100,0,30)
 
+
+
+px_branch = branches["px"]
+py_branch = branches["py"]
+pz_branch = branches["pz"]
+E_branch = branches["Energy"]
+nParticles = branches["nParticle"]
+pt_branch = branches["pt"]
+eta_branch = branches["eta"]
+phi_branch = branches["phi"]
+M_branch = branches["mass"]
+
+pwflag = branches["pwflag"]
+
+num_events = len(nParticles) # get number of events
+
+
+# https://fastjet.fr/repo/doxygen-3.4.1/classfastjet_1_1JetDefinition.html
+jetdef = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.4)
+vector.register_awkward()
+
+
 printStuff = False
 print("There are " + str(num_events))
 for i in range(num_events):
     if i > 200:
         break
-    temp = []
+    if (i % 250 == 0):
+        print(str(int(i/num_events *100)) + "% done")
+    
+    ########################################
+    #Event Cuts
+    ########################################
 
+    #TODO : implement Anthony's cuts
+
+
+    ########################################
+    #Jet Clustering
+    ########################################
+
+    #Looping over all particles in the event and putting them in an array in the format:
+    #[{"px" : __, "py" : __, "pz" : __, "E" : __}, {...}, ... ]
+    #This is the format that FastJet wants them in 
+    temp = []
     for k in range(nParticles[i]):
         temp_part = {}
         temp_part["px"] = px_branch[i][k]
@@ -75,77 +110,51 @@ for i in range(num_events):
         temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
         temp.append(temp_part)
     array1 = ak.Array(temp)
-    
-
-    if (i % 250 == 0):
-        print(str(int(i/num_events *100)) + "% done")
-
     cluster = fastjet.ClusterSequence(array1, jetdef)
-    if printStuff:
-        print(f"\nNumber of particles in event: ", nParticles[i])
-        print(f"Number of jets in event: ", len(cluster.inclusive_jets())) # How many jets are there?
-        print(f"Number of particles according to fastjet: ", cluster.n_particles())
-        print(f"Unclustered constituents: ", cluster.unclustered_particles())
-        print(f"Number of pseudojets: ", cluster.childless_pseudojets())
-        print(f"Jet constituent_index: ", cluster.constituent_index())
-        print(f"Jet constituents: ", cluster.constituents())
-        print(f"Energy correlator of each exclusive jet: ", cluster.exclusive_jets_energy_correlator())
-        print(f"Sum of all the energies in the event: ", cluster.Q())
-        print(type(cluster))
+    
+    
+    ########################################
+    #Analysis Code
+    ########################################
+    isTrijet = True
+    isDijetGamma = False
 
-    for jet, cont in zip(cluster.inclusive_jets(), cluster.constituents()):
-        arr = sorted(cont, key=lambda x: x['E'], reverse=True)
+    if(isTrijet):
+         for jet, cont in zip(cluster.inclusive_jets(), cluster.constituents()):
+             arr = sorted(cont, key=lambda x: x['E'], reverse=True)
 
-        listOfConstituentMomenta = []
-        for tmpconst in range(len(cont)):
+             listOfConstituentMomenta = []
+             for tmpconst in range(len(cont)):
             # print("tmpconst: ", tmpconst)
             # print("px_refs[entry][tmpconst]: ", px_refs[entry][tmpconst])
-            tmp_p4 = ROOT.TLorentzVector(
-                cont[tmpconst]["px"],
-                cont[tmpconst]["py"],
-                cont[tmpconst]["pz"],
-                cont[tmpconst]["E"],
-            )
-            listOfConstituentMomenta.append(tmp_p4)
+                 tmp_p4 = ROOT.TLorentzVector(
+                     cont[tmpconst]["px"],
+                     cont[tmpconst]["py"],
+                     cont[tmpconst]["pz"],
+                     cont[tmpconst]["E"],
+                 )
+                 listOfConstituentMomenta.append(tmp_p4)
 
-        if len(listOfConstituentMomenta) == 1:
-            particle = listOfConstituentMomenta[0]
-            isolationM = -999
-            for k in range(nParticles[i]):
-                 if (round(particle.Px(),3) == round(px_branch[i][k],3)) and (round(particle.Py(),3) == round(py_branch[i][k],3)) and (round(particle.Pz(),3) == round(pz_branch[i][k],3)):
-                      isolationM = M_branch[i][k]	
-            if (isolationM == 0): continue
 
-        jetp4 = ROOT.TLorentzVector()
-        jetp4.SetPxPyPzE(
-            jet['px'],
-            jet['py'],
-            jet['pz'],
-            jet['E']
-        )
+             jetp4 = ROOT.TLorentzVector()
+             jetp4.SetPxPyPzE(
+                 jet['px'],
+                 jet['py'],
+                 jet['pz'],
+                 jet['E']
+             )
 
-        listOfConstituentMomenta = sorted(listOfConstituentMomenta, key=lambda x: x.E(), reverse=True)
-        runningp4sum = ROOT.TLorentzVector()
+             tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
 
-        tmpGraph = ROOT.TGraph(len(arr))
-
-        for i, tmpconst in enumerate(listOfConstituentMomenta):
-            runningp4sum += tmpconst
-            try:
-                index = math.floor(jet['E'] / 50)
-                #h_jetfrag[index*50].Fill(i,runningp4sum.E() / jet['E'] )
-            except:
-                pass
-
-            tmpGraph.SetPoint(i, runningp4sum.E() / jet['E'], i)
-
-        h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
-        h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
-        h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
-        h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
-        h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
-
-    #break # Only doing one event right now, for testing
+             h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
+             h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
+             h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
+             h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
+             h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+     elif(isDijetGamma):
+         #TODO
+     else
+         #TODO
 
 for thing in [h_n50_p, h_n80_p, h_n90_p, h_n95_p, h_n99_p]:
     thing.Smooth()
