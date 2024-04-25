@@ -47,7 +47,8 @@ inputFile = sys.argv[1]
 f = uproot4.open(inputFile)
 
 # Create .root file to save histograms
-myfile = ROOT.TFile.Open("FragmentationStudy/root_files/violin_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
+#myfile = ROOT.TFile.Open("FragmentationStudy/root_files/violin_files/"+sys.argv[2]+"_histograms.root", "RECREATE")
+myfile = ROOT.TFile.Open("new_test.root", "RECREATE")
 
 # Create chain of root trees
 chain = ROOT.TChain("Delphes")
@@ -114,6 +115,7 @@ for entry, event in enumerate(jetconst_refs[:]):
     # If event contains at least 1 GenJet
     for ijet in range(branchGenJet.GetEntries()):
         GenJet = branchGenJet.At(ijet)
+        print(type(GenJet))
         highestEnergyParticle = 0
         particleIndex = -1
         highestEnergyPID = 0

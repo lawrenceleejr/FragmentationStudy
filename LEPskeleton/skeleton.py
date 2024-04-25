@@ -43,11 +43,11 @@ eta_branch = branches["eta"]
 phi_branch = branches["phi"]
 M_branch = branches["mass"]
 
+pid_branch = branches["pid"]
+
 # https://fastjet.fr/repo/doxygen-3.4.1/classfastjet_1_1JetDefinition.html
 jetdef = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.4)
 vector.register_awkward()
-
-builder = ak.ArrayBuilder() # Builds arrays of particles in an event
 
 h_n50_p = ROOT.TH2D(f"h_n50_p","; Jet P; n50",25,0,125,100,0,10)
 h_n80_p = ROOT.TH2D(f"h_n80_p","; Jet P; n80",25,0,125,100,0,20)
@@ -56,28 +56,27 @@ h_n95_p = ROOT.TH2D(f"h_n95_p","; Jet P; n95",25,0,125,100,0,30)
 h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",25,0,125,100,0,30)
 
 printStuff = False
+print("There are " + str(num_events))
 for i in range(num_events):
+<<<<<<< HEAD
     #if i > 200:
         #break
+=======
+>>>>>>> b61ef97a0503df293457c5a7b353a9934340273e
     temp = []
+
     for k in range(nParticles[i]):
         temp_part = {}
         temp_part["px"] = px_branch[i][k]
         temp_part["py"] = py_branch[i][k]
         temp_part["pz"] = pz_branch[i][k]
         temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
-        #print(temp_part)
-        #builder.begin_record()
-        #builder.field("pt").append(pt_branch[i][k])
-        #builder.field("eta").append(eta_branch[i][k])
-        #builder.field("phi").append(phi_branch[i][k])
-        #builder.field("M").append(M_branch[i][k])
-        #builder.end_record()
         temp.append(temp_part)
     array1 = ak.Array(temp)
-    #array1 = builder.snapshot()
-    #array1 = ak.with_name(array1, "Momentum4D")
-    #array1 = ak.with_behavior(array1, vector.backends.awkward.behavior)
+    
+
+    if (i % 250 == 0):
+        print(str(int(i/num_events *100)) + "% done")
 
     cluster = fastjet.ClusterSequence(array1, jetdef)
     if printStuff:
@@ -93,10 +92,7 @@ for i in range(num_events):
         print(type(cluster))
 
     for jet, cont in zip(cluster.inclusive_jets(), cluster.constituents()):
-        #print("\n")
         arr = sorted(cont, key=lambda x: x['E'], reverse=True)
-        #for sub in arr:
-            #print(sub)
 
         listOfConstituentMomenta = []
         for tmpconst in range(len(cont)):
@@ -111,7 +107,12 @@ for i in range(num_events):
             listOfConstituentMomenta.append(tmp_p4)
 
         if len(listOfConstituentMomenta) == 1:
-            continue
+            particle = listOfConstituentMomenta[0]
+            isolationM = -999
+            for k in range(nParticles[i]):
+                 if (round(particle.Px(),3) == round(px_branch[i][k],3)) and (round(particle.Py(),3) == round(py_branch[i][k],3)) and (round(particle.Pz(),3) == round(pz_branch[i][k],3)):
+                      isolationM = M_branch[i][k]	
+            if (isolationM == 0): continue
 
         jetp4 = ROOT.TLorentzVector()
         jetp4.SetPxPyPzE(
