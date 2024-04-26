@@ -86,6 +86,10 @@ di_h_n90_p = ROOT.TH2D(f"dh_n90_p","; Jet P; n90",50,0,175,30,0,30)
 di_h_n95_p = ROOT.TH2D(f"dh_n95_p","; Jet P; n95",50,0,175,30,0,30)
 di_h_n99_p = ROOT.TH2D(f"dh_n99_p","; Jet P; n99",50,0,175,30,0,30)
 
+tj1_v_E = ROOT.TH2D("tj1_v_E","Trijet 1 v E",50,0,175,115,85,250)
+tj2_v_E = ROOT.TH2D("tj2_v_E","Trijet 2 v E",50,0,175,115,85,250)
+tj3_v_E = ROOT.TH2D("tj3_v_E","Trijet 3 v E",50,0,175,115,85,250)
+
 isolatedPhotons = ROOT.TH1F("isolatedPhotons","Number of Isolated Photons",30,0,30)
 isolatedPhotonEnergyhist = ROOT.TH1F("isolatedPhotonEnergyhist", "Total Energy of Isolated Photons", 100, 0, 200)
 numClusters = ROOT.TH1F("numClusters", "Total Number of Clusters",50,0,50)
@@ -103,6 +107,8 @@ tInvMass = ROOT.TH1F("tInvMass","Invariant Mass of leading three jets",100,0,200
 dInvMass = ROOT.TH1F("dInvMass","Invariant Mass of dijet system",100,0,200)
 lInvMass = ROOT.TH1F("lInvMass","Invariant Mass of dijet in every event system",100,0,200)
 
+E_hist = ROOT.TH1D("E_hist","Energy histogram",100,50,225)
+
 
 ########################################
 #Fastjet Setup
@@ -114,7 +120,8 @@ vector.register_awkward()
 
 print("There are " + str(num_events) + " events")
 for i in range(num_events):
-    if (E_branch[i] < 93):
+    print(E_branch[i])
+    if (E_branch[i] < 190):
         continue
     if (i % 250 == 0):
         print(str(int(i/num_events *100)) + "% done")
@@ -165,8 +172,6 @@ for i in range(num_events):
     ########################################
     
     #Have to pass certain criteria to find these events
-    isTrijet = False
-    isDijetGamma = False
     
     isolatedPhotonEnergy = 0
     isoP = 0
@@ -182,16 +187,17 @@ for i in range(num_events):
     tevent_selection.Fill(4)
     devent_selection.Fill(4)
 
-    for cl,index in zip(constituents,cluster.constituent_index()):
+    for tmp_jet_thing,cl,index in zip(jets,constituents,cluster.constituent_index()):
         allPhotons = True
         for cont_index in index:
             if (pwflag[i][cont_index] is not 4):
                 allPhotons = False
+                break
         if (allPhotons):
             for cont_index in index:
                 isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][cont_index]**2) 
             isoP += 1
-        else:
+        elif (tmp_jet_thing["E"] > 10):
             numNonPhotonJets += 1
     isolatedPhotonEnergyhist.Fill(isolatedPhotonEnergy)
     isolatedPhotons.Fill(isoP)
@@ -215,6 +221,8 @@ for i in range(num_events):
     inv_mass = (tmp_j1 + tmp_j2).M()
     lInvMass.Fill(inv_mass)
     
+    isTrijet = False
+    isDijetGamma = False
     if (isolatedPhotonEnergy < 5):
         tevent_selection.Fill(5)
         if (numNonPhotonJets >=3):
@@ -224,7 +232,7 @@ for i in range(num_events):
         
             tj1 = energy_indexing[-1]
             tj2 = energy_indexing[-2]
-            tj3 = energy_indexing[-2]
+            tj3 = energy_indexing[-3]
             tmp_j1 = ROOT.TLorentzVector(
                     jets[tj1]["px"],
                     jets[tj1]["pz"],
@@ -244,6 +252,9 @@ for i in range(num_events):
                     jets[tj3]["E"],
             )
             tInvMass.Fill((tmp_j1 + tmp_j2 + tmp_j3).M())
+            tj1_v_E.Fill(tmp_j1.P(),E_branch[i])
+            tj2_v_E.Fill(tmp_j2.P(),E_branch[i])
+            tj3_v_E.Fill(tmp_j3.P(),E_branch[i])
     else:
         #I'm using the fact that python doesn't give
         #if/else blocks their own scope to reuse these variables
@@ -283,22 +294,26 @@ for i in range(num_events):
         
         highest_energy_index = np.argmax(cluster.inclusive_jets()[:]["E"])
         
-        #for jet, cont, index in zip(cluster.inclusive_jets(), cluster.constituents(),cluster.constituent_index()):
+       # for jet, cont, index in zip(cluster.inclusive_jets(), cluster.constituents(),cluster.constituent_index()):
+       #     print(jet)
+       #     for con, indy in zip(cont,index):
+       #         tmp_p4 = ROOT.TLorentzVector(
+       #             con["px"],
+       #             con["py"],
+       #             con["pz"],
+       #             con["E"],
+       #         )
+       #         print(con)
+       #         print(tmp_p4.Pt(),tmp_p4.Eta(),tmp_p4.Phi(),tmp_p4.M())
+       #         print(pwflag[i][indy])
+       #     print()
+
+
         jet = jets[highest_energy_index]
         cont = constituents[highest_energy_index]
         index = constituent_index[highest_energy_index]
         arr = sorted(cont, key=lambda x: x['E'], reverse=True)
-
-        listOfConstituentMomenta = []
-        for tmpconst in range(len(cont)):
-            tmp_p4 = ROOT.TLorentzVector(
-                cont[tmpconst]["px"],
-                cont[tmpconst]["py"],
-                cont[tmpconst]["pz"],
-                cont[tmpconst]["E"],
-            )
-            listOfConstituentMomenta.append(tmp_p4)
-
+        print(jet["E"])
 
         jetp4 = ROOT.TLorentzVector()
         jetp4.SetPxPyPzE(
@@ -307,6 +322,23 @@ for i in range(num_events):
              jet['pz'],
              jet['E']
          )
+        print(jetp4.P())
+
+        print()
+        print()
+        print()
+
+        listOfConstituentMomenta = []
+        for tmpconst in range(len(arr)):
+            tmp_p4 = ROOT.TLorentzVector(
+                arr[tmpconst]["px"],
+                arr[tmpconst]["py"],
+                arr[tmpconst]["pz"],
+                arr[tmpconst]["E"],
+            )
+            listOfConstituentMomenta.append(tmp_p4)
+
+
 
         tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
 
@@ -328,13 +360,15 @@ for i in range(num_events):
         jet = jets[dj1]
         cont = constituents[dj1]
         index = constituent_index[dj1]
+        arr = sorted(cont, key=lambda x: x['E'], reverse=True)
+
         listOfConstituentMomenta = []
-        for tmpconst in range(len(cont)):
+        for tmpconst in range(len(arr)):
             tmp_p4 = ROOT.TLorentzVector(
-                cont[tmpconst]["px"],
-                cont[tmpconst]["py"],
-                cont[tmpconst]["pz"],
-                cont[tmpconst]["E"],
+                arr[tmpconst]["px"],
+                arr[tmpconst]["py"],
+                arr[tmpconst]["pz"],
+                arr[tmpconst]["E"],
             )
             listOfConstituentMomenta.append(tmp_p4)
 
@@ -365,13 +399,16 @@ for i in range(num_events):
         jet = jets[dj2]
         cont = constituents[dj2]
         index = constituent_index[dj2]
+
+        arr = sorted(cont, key=lambda x: x['E'], reverse=True)
+
         listOfConstituentMomenta = []
-        for tmpconst in range(len(cont)):
+        for tmpconst in range(len(arr)):
             tmp_p4 = ROOT.TLorentzVector(
-                cont[tmpconst]["px"],
-                cont[tmpconst]["py"],
-                cont[tmpconst]["pz"],
-                cont[tmpconst]["E"],
+                arr[tmpconst]["px"],
+                arr[tmpconst]["py"],
+                arr[tmpconst]["pz"],
+                arr[tmpconst]["E"],
             )
             listOfConstituentMomenta.append(tmp_p4)
 
@@ -444,3 +481,10 @@ savehist(lInvMass,"lInvMass")
 
 savehist(numUnClustered,"numUnClustered")
 savehist(dijet_p_event_energy,"dijet_p_event_energy")
+
+savehist(tE,"tE")
+savehist(dE,"dE")
+
+savehist(tj1_v_E,"tj1_v_E")
+savehist(tj2_v_E,"tj2_v_E")
+savehist(tj3_v_E,"tj3_v_E")
