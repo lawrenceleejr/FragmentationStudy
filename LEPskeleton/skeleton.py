@@ -67,6 +67,7 @@ pwflag = branches["pwflag"]
 STheta = branches["STheta"]
 passesWW = branches["passesWW"]
 passesISR = branches["passesISR"]
+passesMissP = branches["passesMissP"]
 
 
 num_events = len(nParticles) # get number of events
@@ -74,12 +75,30 @@ num_events = len(nParticles) # get number of events
 ########################################
 #Declaring Histograms
 ########################################
-h_n50_p = ROOT.TH2D(f"h_n50_p","; Jet P; n50",25,0,125,100,0,10)
-h_n80_p = ROOT.TH2D(f"h_n80_p","; Jet P; n80",25,0,125,100,0,20)
-h_n90_p = ROOT.TH2D(f"h_n90_p","; Jet P; n90",25,0,125,100,0,30)
-h_n95_p = ROOT.TH2D(f"h_n95_p","; Jet P; n95",25,0,125,100,0,30)
-h_n99_p = ROOT.TH2D(f"h_n99_p","; Jet P; n99",25,0,125,100,0,30)
-event_selection = ROOT.TH1F("event_selection","Cut Flow Histogram", 6,0,6)
+tri_h_n50_p = ROOT.TH2D(f"th_n50_p","; Leading Trijet P; n50",50,0,175,10,0,10)
+tri_h_n80_p = ROOT.TH2D(f"th_n80_p","; Leading Trijet P; n80",50,0,175,20,0,20)
+tri_h_n90_p = ROOT.TH2D(f"th_n90_p","; Leading Trijet P; n90",50,0,175,30,0,30)
+tri_h_n95_p = ROOT.TH2D(f"th_n95_p","; Leading Trijet P; n95",50,0,175,30,0,30)
+tri_h_n99_p = ROOT.TH2D(f"th_n99_p","; Leading Trijet P; n99",50,0,175,30,0,30)
+di_h_n50_p = ROOT.TH2D(f"dh_n50_p","; Jet P; n50",50,0,175,10,0,10)
+di_h_n80_p = ROOT.TH2D(f"dh_n80_p","; Jet P; n80",50,0,175,20,0,20)
+di_h_n90_p = ROOT.TH2D(f"dh_n90_p","; Jet P; n90",50,0,175,30,0,30)
+di_h_n95_p = ROOT.TH2D(f"dh_n95_p","; Jet P; n95",50,0,175,30,0,30)
+di_h_n99_p = ROOT.TH2D(f"dh_n99_p","; Jet P; n99",50,0,175,30,0,30)
+
+isolatedPhotons = ROOT.TH1F("isolatedPhotons","Number of Isolated Photons",30,0,30)
+isolatedPhotonEnergyhist = ROOT.TH1F("isolatedPhotonEnergyhist", "Total Energy of Isolated Photons", 100, 0, 200)
+numClusters = ROOT.TH1F("numClusters", "Total Number of Clusters",50,0,50)
+
+tevent_selection = ROOT.TH1F("trijet_event_selection","Trijet Cut Flow Histogram", 7,0,7)
+devent_selection = ROOT.TH1F("dijet_event_selection","Dijet Cut Flow Histogram", 8,0,8)
+
+tE = ROOT.TH1F("trijet_energy","Leading Trijet Energy",100,0,200)
+dE = ROOT.TH1F("dijet_energy","Dijet Energy",100,0,200)
+tPions = ROOT.TH1F("trijet_pions","Number of Pions in Leading Trijet",30,0,30)
+dPions = ROOT.TH1F("dijet_pions","Number of Pions in dijet",30,0,30)
+tInvMass = ROOT.TH1F("tInvMass","Invariant Mass of leading three jets",100,0,200)
+dInvMass = ROOT.TH1F("dInvMass","Invariant Mass of dijet system",100,0,200)
 
 
 ########################################
@@ -91,31 +110,31 @@ vector.register_awkward()
 
 
 print("There are " + str(num_events) + " events")
-final_event = num_events
-final_event = 1000
-for i in range(final_event):
+for i in range(num_events):
     if (i % 250 == 0):
-        print(str(int(i/final_event *100)) + "% done")
-    
-    event_selection.Fill(0)
+        print(str(int(i/num_events *100)) + "% done")
+
+    tevent_selection.Fill(0)
+    devent_selection.Fill(0)
     ########################################
     #Pre-clustering Event Cuts
     ########################################
 
-    #Cut 1
     if (abs(np.cos(STheta[i])) > 0.82):
         continue
-    event_selection.Fill(1)
+    tevent_selection.Fill(1)
+    devent_selection.Fill(1)
 
-    #Cut 2
     if (not passesWW[i]):
         continue
-    event_selection.Fill(2)
+    tevent_selection.Fill(2)
+    devent_selection.Fill(2)
     
-    #Cut 3, this will cut the qq+gamma events we are looking for but for now leave it.
-    if (not passesISR[i]):
+    if (not passesMissP[i]):
         continue
-    event_selection.Fill(3)
+    tevent_selection.Fill(3)
+    devent_selection.Fill(3)
+
     
     ########################################
     #Jet Clustering
@@ -145,78 +164,221 @@ for i in range(final_event):
     isDijetGamma = False
     
     isolatedPhotonEnergy = 0
+    isoP = 0
     numNonPhotonJets = 0
 
-    for cl,index in zip(cluster.constituents(),cluster.constituent_index()):
+    jets = cluster.inclusive_jets()
+    constituents = cluster.constituents()
+    constituent_index = cluster.constituent_index()
+    numClusters.Fill(len(jets))
+
+    if(len(jets) < 2):
+        continue
+    tevent_selection.Fill(4)
+    devent_selection.Fill(4)
+
+    for cl,index in zip(constituents,cluster.constituent_index()):
         if (len(cl) == 1 and pwflag[i][index[0]] == 4):
             isolatedPhotonEnergy += np.sqrt(px_branch[i][index[0]]**2 + py_branch[i][index[0]]**2 + pz_branch[i][index[0]]**2) 
+            isoP += 1
         else:
             numNonPhotonJets += 1
+    isolatedPhotonEnergyhist.Fill(isolatedPhotonEnergy)
+    isolatedPhotons.Fill(isoP)
 
-    #Cut 4
-    if (isolatedPhotonEnergy > 10):
-        continue
-    event_selection.Fill(4)
-
-    #Cut 5
-    if (numNonPhotonJets < 3):
-        continue
-    event_selection.Fill(5)
     
-    if (isolatedPhotonEnergy < 10 and numNonPhotonJets > 3):
-        isTrijet = True
-
-    #TODO : implement 
+    if (isolatedPhotonEnergy < 5):
+        tevent_selection.Fill(5)
+        if (numNonPhotonJets >=3):
+            tevent_selection.Fill(6)
+            isTrijet = True
+            energy_indexing = np.argsort(jets[:]["E"])
+        
+            tj1 = energy_indexing[-1]
+            tj2 = energy_indexing[-2]
+            tj3 = energy_indexing[-2]
+            tmp_j1 = ROOT.TLorentzVector(
+                    jets[tj1]["px"],
+                    jets[tj1]["pz"],
+                    jets[tj1]["py"],
+                    jets[tj1]["E"],
+            )
+            tmp_j2 = ROOT.TLorentzVector(
+                    jets[tj2]["px"],
+                    jets[tj2]["pz"],
+                    jets[tj2]["py"],
+                    jets[tj2]["E"],
+            )
+            tmp_j3 = ROOT.TLorentzVector(
+                    jets[tj3]["px"],
+                    jets[tj3]["pz"],
+                    jets[tj3]["py"],
+                    jets[tj3]["E"],
+            )
+            tInvMass.Fill((tmp_j1 + tmp_j2 + tmp_j3).M())
+    else:
+        #I'm using the fact that python doesn't give
+        #if/else blocks their own scope to reuse these variables
+        #later in the dijet code without refinding these things.
+        #Gross.
+        energy_indexing = np.argsort(jets[:]["E"])
+        
+        dj1 = energy_indexing[-1]
+        dj2 = energy_indexing[-2]
+        tmp_j1 = ROOT.TLorentzVector(
+                    jets[dj1]["px"],
+                    jets[dj1]["pz"],
+                    jets[dj1]["py"],
+                    jets[dj1]["E"],
+            )
+        tmp_j2 = ROOT.TLorentzVector(
+                    jets[dj2]["px"],
+                    jets[dj2]["pz"],
+                    jets[dj2]["py"],
+                    jets[dj2]["E"],
+            )
+        inv_mass = (tmp_j1 + tmp_j2).M()
+        dInvMass.Fill(inv_mass)
+        if (inv_mass > 86.188):
+            devent_selection.Fill(5)
+            if (inv_mass < 96.188):
+                devent_selection.Fill(6)
+                if (isolatedPhotonEnergy >= 5):
+                    devent_selection.Fill(7)
+                    isDijetGamma = True
 
     ########################################
     #Analysis Code
     ########################################
 
     if(isTrijet):
-        for jet, cont, index in zip(cluster.inclusive_jets(), cluster.constituents(),cluster.constituent_index()):
-            arr = sorted(cont, key=lambda x: x['E'], reverse=True)
+        
+        highest_energy_index = np.argmax(cluster.inclusive_jets()[:]["E"])
+        
+        #for jet, cont, index in zip(cluster.inclusive_jets(), cluster.constituents(),cluster.constituent_index()):
+        jet = jets[highest_energy_index]
+        cont = constituents[highest_energy_index]
+        index = constituent_index[highest_energy_index]
+        arr = sorted(cont, key=lambda x: x['E'], reverse=True)
 
-            listOfConstituentMomenta = []
-            for tmpconst in range(len(cont)):
-            # print("tmpconst: ", tmpconst)
-            # print("px_refs[entry][tmpconst]: ", px_refs[entry][tmpconst])
-                tmp_p4 = ROOT.TLorentzVector(
-                    cont[tmpconst]["px"],
-                    cont[tmpconst]["py"],
-                    cont[tmpconst]["pz"],
-                    cont[tmpconst]["E"],
-                )
-                listOfConstituentMomenta.append(tmp_p4)
+        listOfConstituentMomenta = []
+        for tmpconst in range(len(cont)):
+            tmp_p4 = ROOT.TLorentzVector(
+                cont[tmpconst]["px"],
+                cont[tmpconst]["py"],
+                cont[tmpconst]["pz"],
+                cont[tmpconst]["E"],
+            )
+            listOfConstituentMomenta.append(tmp_p4)
 
 
-            jetp4 = ROOT.TLorentzVector()
-            jetp4.SetPxPyPzE(
-                 jet['px'],
-                 jet['py'],
-                 jet['pz'],
-                 jet['E']
-             )
+        jetp4 = ROOT.TLorentzVector()
+        jetp4.SetPxPyPzE(
+             jet['px'],
+             jet['py'],
+             jet['pz'],
+             jet['E']
+         )
 
-            tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
+        tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
 
-            h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
-            h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
-            h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
-            h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
-            h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+        tri_h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
+        tri_h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
+        tri_h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
+        tri_h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
+        tri_h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+        
+        tE.Fill(jet["E"])
+
+        nPi = 0
+        for ind in index:
+            if (M_branch[i][ind] > 0.134 and M_branch[i][ind] < 0.144):
+                nPi += 1
+        tPions.Fill(nPi)
 
     elif(isDijetGamma):
-        a = 0
-        #TODO
+        jet = jets[dj1]
+        cont = constituents[dj1]
+        index = constituent_index[dj1]
+        listOfConstituentMomenta = []
+        for tmpconst in range(len(cont)):
+            tmp_p4 = ROOT.TLorentzVector(
+                cont[tmpconst]["px"],
+                cont[tmpconst]["py"],
+                cont[tmpconst]["pz"],
+                cont[tmpconst]["E"],
+            )
+            listOfConstituentMomenta.append(tmp_p4)
+
+
+        jetp4 = ROOT.TLorentzVector()
+        jetp4.SetPxPyPzE(
+             jet['px'],
+             jet['py'],
+             jet['pz'],
+             jet['E']
+         )
+
+        tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
+        di_h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
+        di_h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
+        di_h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
+        di_h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
+        di_h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+
+        dE.Fill(jet["E"])
+
+        nPi = 0
+        for ind in index:
+            if (M_branch[i][ind] > 0.134 and M_branch[i][ind] < 0.144):
+                nPi += 1
+        dPions.Fill(nPi)
+
+        jet = jets[dj2]
+        cont = constituents[dj2]
+        index = constituent_index[dj2]
+        listOfConstituentMomenta = []
+        for tmpconst in range(len(cont)):
+            tmp_p4 = ROOT.TLorentzVector(
+                cont[tmpconst]["px"],
+                cont[tmpconst]["py"],
+                cont[tmpconst]["pz"],
+                cont[tmpconst]["E"],
+            )
+            listOfConstituentMomenta.append(tmp_p4)
+
+
+        jetp4 = ROOT.TLorentzVector()
+        jetp4.SetPxPyPzE(
+             jet['px'],
+             jet['py'],
+             jet['pz'],
+             jet['E']
+         )
+
+        tmpGraph = nXX_graph(listOfConstituentMomenta,jet["E"])
+        di_h_n50_p.Fill(jetp4.P(), tmpGraph.Eval(0.5))
+        di_h_n80_p.Fill(jetp4.P(), tmpGraph.Eval(0.8))
+        di_h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
+        di_h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
+        di_h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+
+        dE.Fill(jet["E"])
+
+        nPi = 0
+        for ind in index:
+            if (M_branch[i][ind] > 0.134 and M_branch[i][ind] < 0.144):
+                nPi += 1
+        dPions.Fill(nPi)
+
     else:
-        print("danger")
-        #TODO
+        a = 0
 
 
-savehist(event_selection, "event_selection")
-exit()
-for thing in [h_n50_p, h_n80_p, h_n90_p, h_n95_p, h_n99_p]:
-    thing.Smooth()
+print("Finished analysis. Saving histograms...")
+
+for thing in [tri_h_n50_p, tri_h_n80_p, tri_h_n90_p, tri_h_n95_p, tri_h_n99_p,di_h_n50_p, di_h_n80_p, di_h_n90_p, di_h_n95_p, di_h_n99_p]:
+    #thing.Smooth()
     thing.SetFillColor(ROOT.kRed)
     thing.SetFillStyle(2)
     thing.Write()
@@ -225,9 +387,28 @@ for thing in [h_n50_p, h_n80_p, h_n90_p, h_n95_p, h_n99_p]:
     thing.QuantilesX(0.25).Write()
     thing.QuantilesX(0.75).Write()
 
-savehist(h_n50_p, "h_n50_p")
-savehist(h_n80_p, "h_n80_p")
-savehist(h_n90_p, "h_n90_p")
-savehist(h_n95_p, "h_n95_p")
-savehist(h_n99_p, "h_n99_p")
+savehist(tri_h_n50_p, "tri_h_n50_p")
+savehist(tri_h_n80_p, "tri_h_n80_p")
+savehist(tri_h_n90_p, "tri_h_n90_p")
+savehist(tri_h_n95_p, "tri_h_n95_p")
+savehist(tri_h_n99_p, "tri_h_n99_p")
+savehist(di_h_n50_p, "di_h_n50_p")
+savehist(di_h_n80_p, "di_h_n80_p")
+savehist(di_h_n90_p, "di_h_n90_p")
+savehist(di_h_n95_p, "di_h_n95_p")
+savehist(di_h_n99_p, "di_h_n99_p")
 
+
+savehist(isolatedPhotons,"isolated_photons")
+savehist(isolatedPhotonEnergyhist,"isolatedPhotonEnergy")
+savehist(numClusters,"numClusters")
+
+savehist(tevent_selection,"trijet_event_selection")
+savehist(devent_selection,"dijet_event_selection")
+
+savehist(tE,"trijet_energy")
+savehist(dE,"dijet_energy")
+savehist(tPions,"trijet_pions")
+savehist(dPions,"dijet_pions")
+savehist(tInvMass,"tInvMass")
+savehist(dInvMass,"dInvMass")
