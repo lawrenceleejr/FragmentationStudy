@@ -93,7 +93,6 @@ for i in range(num_events):
 
     #TODO : implement Anthony's cuts
 
-
     ########################################
     #Jet Clustering
     ########################################
@@ -111,8 +110,12 @@ for i in range(num_events):
         temp.append(temp_part)
     array1 = ak.Array(temp)
     cluster = fastjet.ClusterSequence(array1, jetdef)
+
+    #Currently just care about event level distributions
+    continue 
     
-    
+    #TODO    
+
     ########################################
     #Analysis Code
     ########################################
@@ -151,6 +154,7 @@ for i in range(num_events):
              h_n90_p.Fill(jetp4.P(), tmpGraph.Eval(0.9))
              h_n95_p.Fill(jetp4.P(), tmpGraph.Eval(0.95))
              h_n99_p.Fill(jetp4.P(), tmpGraph.Eval(0.99))
+
      elif(isDijetGamma):
          #TODO
      else
