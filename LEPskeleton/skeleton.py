@@ -189,7 +189,7 @@ for i in range(num_events):
                 allPhotons = False
         if (allPhotons):
             for cont_index in index:
-                isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][index[cont_index]]**2) 
+                isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][cont_index]**2) 
             isoP += 1
         else:
             numNonPhotonJets += 1
