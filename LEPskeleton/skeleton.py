@@ -89,6 +89,8 @@ di_h_n99_p = ROOT.TH2D(f"dh_n99_p","; Jet P; n99",50,0,175,30,0,30)
 isolatedPhotons = ROOT.TH1F("isolatedPhotons","Number of Isolated Photons",30,0,30)
 isolatedPhotonEnergyhist = ROOT.TH1F("isolatedPhotonEnergyhist", "Total Energy of Isolated Photons", 100, 0, 200)
 numClusters = ROOT.TH1F("numClusters", "Total Number of Clusters",50,0,50)
+numUnClustered = ROOT.TH1F("numUnClustered", "Total Number of unclustered particles",50,0,100)
+dijet_p_event_energy = ROOT.TH1F("dijet_p_event_energy", "Energy in the qqgamma Events", 50,0,225)
 
 tevent_selection = ROOT.TH1F("trijet_event_selection","Trijet Cut Flow Histogram", 7,0,7)
 devent_selection = ROOT.TH1F("dijet_event_selection","Dijet Cut Flow Histogram", 8,0,8)
@@ -99,6 +101,7 @@ tPions = ROOT.TH1F("trijet_pions","Number of Pions in Leading Trijet",30,0,30)
 dPions = ROOT.TH1F("dijet_pions","Number of Pions in dijet",30,0,30)
 tInvMass = ROOT.TH1F("tInvMass","Invariant Mass of leading three jets",100,0,200)
 dInvMass = ROOT.TH1F("dInvMass","Invariant Mass of dijet system",100,0,200)
+lInvMass = ROOT.TH1F("lInvMass","Invariant Mass of dijet in every event system",100,0,200)
 
 
 ########################################
@@ -111,6 +114,8 @@ vector.register_awkward()
 
 print("There are " + str(num_events) + " events")
 for i in range(num_events):
+    if (E_branch[i] < 93):
+        continue
     if (i % 250 == 0):
         print(str(int(i/num_events *100)) + "% done")
 
@@ -178,14 +183,37 @@ for i in range(num_events):
     devent_selection.Fill(4)
 
     for cl,index in zip(constituents,cluster.constituent_index()):
-        if (len(cl) == 1 and pwflag[i][index[0]] == 4):
-            isolatedPhotonEnergy += np.sqrt(px_branch[i][index[0]]**2 + py_branch[i][index[0]]**2 + pz_branch[i][index[0]]**2) 
+        allPhotons = True
+        for cont_index in index:
+            if (pwflag[i][cont_index] is not 4):
+                allPhotons = False
+        if (allPhotons):
+            for cont_index in index:
+                isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][index[cont_index]]**2) 
             isoP += 1
         else:
             numNonPhotonJets += 1
     isolatedPhotonEnergyhist.Fill(isolatedPhotonEnergy)
     isolatedPhotons.Fill(isoP)
-
+    numUnClustered.Fill(len(cluster.unclustered_particles()))
+    energy_indexing = np.argsort(jets[:]["E"])
+        
+    lj1 = energy_indexing[-1]
+    lj2 = energy_indexing[-2]
+    tmp_j1 = ROOT.TLorentzVector(
+                jets[lj1]["px"],
+                jets[lj1]["pz"],
+                jets[lj1]["py"],
+                jets[lj1]["E"],
+            )
+    tmp_j2 = ROOT.TLorentzVector(
+                jets[lj2]["px"],
+                jets[lj2]["pz"],
+                jets[lj2]["py"],
+                jets[lj2]["E"],
+        )
+    inv_mass = (tmp_j1 + tmp_j2).M()
+    lInvMass.Fill(inv_mass)
     
     if (isolatedPhotonEnergy < 5):
         tevent_selection.Fill(5)
@@ -239,13 +267,13 @@ for i in range(num_events):
             )
         inv_mass = (tmp_j1 + tmp_j2).M()
         dInvMass.Fill(inv_mass)
+        devent_selection.Fill(5)
         if (inv_mass > 86.188):
-            devent_selection.Fill(5)
+            devent_selection.Fill(6)
             if (inv_mass < 96.188):
-                devent_selection.Fill(6)
-                if (isolatedPhotonEnergy >= 5):
-                    devent_selection.Fill(7)
-                    isDijetGamma = True
+                devent_selection.Fill(7)
+                dijet_p_event_energy.Fill(E_branch[i])
+                isDijetGamma = True
 
     ########################################
     #Analysis Code
@@ -412,3 +440,7 @@ savehist(tPions,"trijet_pions")
 savehist(dPions,"dijet_pions")
 savehist(tInvMass,"tInvMass")
 savehist(dInvMass,"dInvMass")
+savehist(lInvMass,"lInvMass")
+
+savehist(numUnClustered,"numUnClustered")
+savehist(dijet_p_event_energy,"dijet_p_event_energy")
