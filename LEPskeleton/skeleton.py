@@ -120,7 +120,6 @@ vector.register_awkward()
 
 print("There are " + str(num_events) + " events")
 for i in range(num_events):
-    print(E_branch[i])
     if (E_branch[i] < 190):
         continue
     if (i % 250 == 0):
@@ -187,39 +186,58 @@ for i in range(num_events):
     tevent_selection.Fill(4)
     devent_selection.Fill(4)
 
+    #find the jets that are above 10 GeV
+    #and don't have a photon as their highest member
+    good_jets_index = [] 
+
+    #This code iterates through and finds the clusters that
+    #have a photon as their highest energy. 
     for tmp_jet_thing,cl,index in zip(jets,constituents,cluster.constituent_index()):
-        allPhotons = True
-        for cont_index in index:
-            if (pwflag[i][cont_index] is not 4):
-                allPhotons = False
-                break
+        allPhotons = False
+        highest_contE_index = np.argmax(cl[:]["E"])
+        if (pwflag[i][index[highest_contE_index]] == 4):
+            allPhotons = True
         if (allPhotons):
             for cont_index in index:
                 isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][cont_index]**2) 
             isoP += 1
+            good_jets_index.append(0)
         elif (tmp_jet_thing["E"] > 10):
+            good_jets_index.append(1)
             numNonPhotonJets += 1
+        else:
+            good_jets_index.append(0)
     isolatedPhotonEnergyhist.Fill(isolatedPhotonEnergy)
     isolatedPhotons.Fill(isoP)
     numUnClustered.Fill(len(cluster.unclustered_particles()))
-    energy_indexing = np.argsort(jets[:]["E"])
-        
-    lj1 = energy_indexing[-1]
-    lj2 = energy_indexing[-2]
-    tmp_j1 = ROOT.TLorentzVector(
-                jets[lj1]["px"],
-                jets[lj1]["pz"],
-                jets[lj1]["py"],
-                jets[lj1]["E"],
-            )
-    tmp_j2 = ROOT.TLorentzVector(
-                jets[lj2]["px"],
-                jets[lj2]["pz"],
-                jets[lj2]["py"],
-                jets[lj2]["E"],
+
+    #I got freaked out about the whole python scope thing 
+    #and now my code is becoming unreadable...
+    good_jets = []
+    for tmp_iter2,tmp_jet_iter in enumerate(jets):
+        if(good_jets_index[tmp_iter2] == 1):
+            good_jets.append(tmp_jet_iter.to_list())
+    
+    #sort the good jets based on their energy
+    good_jets = sorted(good_jets, key=lambda d: d['E'])
+    
+    if (len(good_jets) >= 2):
+        lj1 = good_jets[-1]
+        lj2 = good_jets[-2]
+        tmp_j1 = ROOT.TLorentzVector(
+                lj1["px"],
+                lj1["pz"],
+                lj1["py"],
+                lj1["E"],
         )
-    inv_mass = (tmp_j1 + tmp_j2).M()
-    lInvMass.Fill(inv_mass)
+        tmp_j2 = ROOT.TLorentzVector(
+                lj2["px"],
+                lj2["pz"],
+                lj2["py"],
+                lj2["E"],
+        )
+        inv_mass = (tmp_j1 + tmp_j2).M()
+        lInvMass.Fill(inv_mass)
     
     isTrijet = False
     isDijetGamma = False
@@ -228,53 +246,51 @@ for i in range(num_events):
         if (numNonPhotonJets >=3):
             tevent_selection.Fill(6)
             isTrijet = True
-            energy_indexing = np.argsort(jets[:]["E"])
         
-            tj1 = energy_indexing[-1]
-            tj2 = energy_indexing[-2]
-            tj3 = energy_indexing[-3]
+            tj1 = good_jets[-1]
+            tj2 = good_jets[-2]
+            tj3 = good_jets[-3]
             tmp_j1 = ROOT.TLorentzVector(
-                    jets[tj1]["px"],
-                    jets[tj1]["pz"],
-                    jets[tj1]["py"],
-                    jets[tj1]["E"],
+                    tj1["px"],
+                    tj1["pz"],
+                    tj1["py"],
+                    tj1["E"],
             )
             tmp_j2 = ROOT.TLorentzVector(
-                    jets[tj2]["px"],
-                    jets[tj2]["pz"],
-                    jets[tj2]["py"],
-                    jets[tj2]["E"],
+                    tj2["px"],
+                    tj2["pz"],
+                    tj2["py"],
+                    tj2["E"],
             )
             tmp_j3 = ROOT.TLorentzVector(
-                    jets[tj3]["px"],
-                    jets[tj3]["pz"],
-                    jets[tj3]["py"],
-                    jets[tj3]["E"],
+                    tj3["px"],
+                    tj3["pz"],
+                    tj3["py"],
+                    tj3["E"],
             )
             tInvMass.Fill((tmp_j1 + tmp_j2 + tmp_j3).M())
             tj1_v_E.Fill(tmp_j1.P(),E_branch[i])
             tj2_v_E.Fill(tmp_j2.P(),E_branch[i])
             tj3_v_E.Fill(tmp_j3.P(),E_branch[i])
-    else:
+    elif (len(good_jets) >= 2):
         #I'm using the fact that python doesn't give
         #if/else blocks their own scope to reuse these variables
         #later in the dijet code without refinding these things.
         #Gross.
-        energy_indexing = np.argsort(jets[:]["E"])
         
-        dj1 = energy_indexing[-1]
-        dj2 = energy_indexing[-2]
+        dj1 = good_jets[-1]
+        dj2 = good_jets[-2]
         tmp_j1 = ROOT.TLorentzVector(
-                    jets[dj1]["px"],
-                    jets[dj1]["pz"],
-                    jets[dj1]["py"],
-                    jets[dj1]["E"],
+                    dj1["px"],
+                    dj1["pz"],
+                    dj1["py"],
+                    dj1["E"],
             )
         tmp_j2 = ROOT.TLorentzVector(
-                    jets[dj2]["px"],
-                    jets[dj2]["pz"],
-                    jets[dj2]["py"],
-                    jets[dj2]["E"],
+                    dj2["px"],
+                    dj2["pz"],
+                    dj2["py"],
+                    dj2["E"],
             )
         inv_mass = (tmp_j1 + tmp_j2).M()
         dInvMass.Fill(inv_mass)
@@ -289,6 +305,12 @@ for i in range(num_events):
     ########################################
     #Analysis Code
     ########################################
+
+    #need to do this part
+    #using only the good jets
+    #so we need to link the good jets
+    #to the constituents
+    continue
 
     if(isTrijet):
         
