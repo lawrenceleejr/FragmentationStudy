@@ -329,7 +329,7 @@ for i in range(num_events):
         inv_mass = (tmp_j1 + tmp_j2).M()
         dInvMass.Fill(inv_mass)
         devent_selection.Fill(5)
-        if (inv_mass > 86.188):
+        if (inv_mass > 36.188):
             devent_selection.Fill(6)
             if (inv_mass < 96.188):
                 devent_selection.Fill(7)
@@ -414,7 +414,7 @@ for i in range(num_events):
 
         #Let's find  the two highest energy jets that also
         #match our earlier criteria for good jets
-        jet_sorted_index = np.argsort(np.max(cluster.inclusive_jets()[:]["E"], axis=0))
+        jet_sorted_index = np.argsort(cluster.inclusive_jets()[:]["E"])
         dijet_index_1 = jet_sorted_index[-1]
         dijet_index_2 = jet_sorted_index[-2]
         for jsi in reversed(jet_sorted_index):
