@@ -106,8 +106,10 @@ dPions = ROOT.TH1F("dijet_pions","Number of Pions in dijet",30,0,30)
 tInvMass = ROOT.TH1F("tInvMass","Invariant Mass of leading three jets",100,0,200)
 dInvMass = ROOT.TH1F("dInvMass","Invariant Mass of dijet system",100,0,200)
 lInvMass = ROOT.TH1F("lInvMass","Invariant Mass of dijet in every event system",100,0,200)
+tlInvMass = ROOT.TH1F("tlInvMass","Invariant Mass of trijet in every event system",100,0,200)
 
 E_hist = ROOT.TH1D("E_hist","Energy histogram",100,50,225)
+E_vs_scalar_sum = ROOT.TH2D("E_vs_scalar_sum","Energy listed vs Scalar Sum of Particle Energies", 75,0,230,75,0,230)
 
 
 ########################################
@@ -120,8 +122,6 @@ vector.register_awkward()
 
 print("There are " + str(num_events) + " events")
 for i in range(num_events):
-    if (E_branch[i] < 190):
-        continue
     if (i % 250 == 0):
         print(str(int(i/num_events *100)) + "% done")
 
@@ -131,20 +131,20 @@ for i in range(num_events):
     #Pre-clustering Event Cuts
     ########################################
 
-    if (abs(np.cos(STheta[i])) > 0.82):
-        continue
-    tevent_selection.Fill(1)
-    devent_selection.Fill(1)
+   # if (abs(np.cos(STheta[i])) > 0.82):
+   #     continue
+   # tevent_selection.Fill(1)
+   # devent_selection.Fill(1)
 
-    if (not passesWW[i]):
-        continue
-    tevent_selection.Fill(2)
-    devent_selection.Fill(2)
-    
-    if (not passesMissP[i]):
-        continue
-    tevent_selection.Fill(3)
-    devent_selection.Fill(3)
+   # if (not passesWW[i]):
+   #     continue
+   # tevent_selection.Fill(2)
+   # devent_selection.Fill(2)
+   # 
+   # if (not passesMissP[i]):
+   #     continue
+   # tevent_selection.Fill(3)
+   # devent_selection.Fill(3)
 
     
     ########################################
@@ -154,18 +154,22 @@ for i in range(num_events):
     #Looping over all particles in the event and putting them in an array in the format:
     #[{"px" : __, "py" : __, "pz" : __, "E" : __}, {...}, ... ]
     #This is the format that FastJet wants them in 
-    temp = []
+    tmp_energy = 0
+    #temp = []
     for k in range(nParticles[i]):
-        temp_part = {}
-        temp_part["px"] = px_branch[i][k]
-        temp_part["py"] = py_branch[i][k]
-        temp_part["pz"] = pz_branch[i][k]
-        temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
-        temp.append(temp_part)
-    array1 = ak.Array(temp)
+        #temp_part = {}
+        #temp_part["px"] = px_branch[i][k]
+        #temp_part["py"] = py_branch[i][k]
+        #temp_part["pz"] = pz_branch[i][k]
+        #temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
+        tmp_energy += np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
+       # temp.append(temp_part)
+    #array1 = ak.Array(temp)
+    E_hist.Fill(tmp_energy)
+    E_vs_scalar_sum.Fill(E_branch[i],tmp_energy)
+
+    continue
     cluster = fastjet.ClusterSequence(array1, jetdef)
-
-
     ########################################
     #Pre-clustering Event Cuts
     ########################################
@@ -238,6 +242,31 @@ for i in range(num_events):
         )
         inv_mass = (tmp_j1 + tmp_j2).M()
         lInvMass.Fill(inv_mass)
+
+    if (len(good_jets) >= 3):
+        tlj1 = good_jets[-1]
+        tlj2 = good_jets[-2]
+        tlj3 = good_jets[-3]
+        tmp_tj1 = ROOT.TLorentzVector(
+                tlj1["px"],
+                tlj1["pz"],
+                tlj1["py"],
+                tlj1["E"],
+        )
+        tmp_tj2 = ROOT.TLorentzVector(
+                tlj2["px"],
+                tlj2["pz"],
+                tlj2["py"],
+                tlj2["E"],
+        )
+        tmp_tj3 = ROOT.TLorentzVector(
+                tlj3["px"],
+                tlj3["pz"],
+                tlj3["py"],
+                tlj3["E"],
+        )
+        inv_mass = (tmp_tj1 + tmp_tj2 + tmp_tj3).M()
+        tlInvMass.Fill(inv_mass)
     
     isTrijet = False
     isDijetGamma = False
@@ -500,12 +529,15 @@ savehist(dPions,"dijet_pions")
 savehist(tInvMass,"tInvMass")
 savehist(dInvMass,"dInvMass")
 savehist(lInvMass,"lInvMass")
+savehist(tlInvMass,"tlInvMass")
 
 savehist(numUnClustered,"numUnClustered")
 savehist(dijet_p_event_energy,"dijet_p_event_energy")
 
 savehist(tE,"tE")
 savehist(dE,"dE")
+savehist(E_hist,"E_hist")
+savehist(E_vs_scalar_sum,"E_vs_scalar_sum")
 
 savehist(tj1_v_E,"tj1_v_E")
 savehist(tj2_v_E,"tj2_v_E")
