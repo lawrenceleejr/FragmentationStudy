@@ -122,6 +122,10 @@ vector.register_awkward()
 
 print("There are " + str(num_events) + " events")
 for i in range(num_events):
+    if (E_branch[i] >= 200):
+                continue
+    if (E_branch[i] <= 96):
+                continue
     if (i % 250 == 0):
         print(str(int(i/num_events *100)) + "% done")
 
@@ -131,20 +135,20 @@ for i in range(num_events):
     #Pre-clustering Event Cuts
     ########################################
 
-   # if (abs(np.cos(STheta[i])) > 0.82):
-   #     continue
-   # tevent_selection.Fill(1)
-   # devent_selection.Fill(1)
+    if (abs(np.cos(STheta[i])) > 0.82):
+        continue
+    tevent_selection.Fill(1)
+    devent_selection.Fill(1)
 
-   # if (not passesWW[i]):
-   #     continue
-   # tevent_selection.Fill(2)
-   # devent_selection.Fill(2)
-   # 
-   # if (not passesMissP[i]):
-   #     continue
-   # tevent_selection.Fill(3)
-   # devent_selection.Fill(3)
+    if (not passesWW[i]):
+        continue
+    tevent_selection.Fill(2)
+    devent_selection.Fill(2)
+    
+    if (not passesMissP[i]):
+        continue
+    tevent_selection.Fill(3)
+    devent_selection.Fill(3)
 
     
     ########################################
@@ -155,20 +159,21 @@ for i in range(num_events):
     #[{"px" : __, "py" : __, "pz" : __, "E" : __}, {...}, ... ]
     #This is the format that FastJet wants them in 
     tmp_energy = 0
-    #temp = []
+    temp = []
     for k in range(nParticles[i]):
-        #temp_part = {}
-        #temp_part["px"] = px_branch[i][k]
-        #temp_part["py"] = py_branch[i][k]
-        #temp_part["pz"] = pz_branch[i][k]
-        #temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
-        tmp_energy += np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
-       # temp.append(temp_part)
-    #array1 = ak.Array(temp)
+        temp_part = {}
+        temp_part["px"] = px_branch[i][k]
+        temp_part["py"] = py_branch[i][k]
+        temp_part["pz"] = pz_branch[i][k]
+        temp_part["E"] = np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
+        #tmp_energy += np.sqrt(M_branch[i][k]**2 + px_branch[i][k]**2 + py_branch[i][k]**2 + pz_branch[i][k]**2)
+        tmp_energy += temp_part["E"]
+        temp.append(temp_part)
+
+    array1 = ak.Array(temp)
     E_hist.Fill(tmp_energy)
     E_vs_scalar_sum.Fill(E_branch[i],tmp_energy)
 
-    continue
     cluster = fastjet.ClusterSequence(array1, jetdef)
     ########################################
     #Pre-clustering Event Cuts
@@ -339,11 +344,15 @@ for i in range(num_events):
     #using only the good jets
     #so we need to link the good jets
     #to the constituents
-    continue
 
     if(isTrijet):
         
-        highest_energy_index = np.argmax(cluster.inclusive_jets()[:]["E"])
+        jet_sorted_index = np.argsort(np.max(cluster.inclusive_jets()[:]["E"], axis=0))
+        highest_energy_index = jet_sorted_index[-1]
+        for jsi in reversed(jet_sorted_index):
+            if good_jets_index[jsi] == 1:
+                highest_energy_index = jsi
+                break
         
        # for jet, cont, index in zip(cluster.inclusive_jets(), cluster.constituents(),cluster.constituent_index()):
        #     print(jet)
@@ -364,7 +373,6 @@ for i in range(num_events):
         cont = constituents[highest_energy_index]
         index = constituent_index[highest_energy_index]
         arr = sorted(cont, key=lambda x: x['E'], reverse=True)
-        print(jet["E"])
 
         jetp4 = ROOT.TLorentzVector()
         jetp4.SetPxPyPzE(
@@ -373,11 +381,6 @@ for i in range(num_events):
              jet['pz'],
              jet['E']
          )
-        print(jetp4.P())
-
-        print()
-        print()
-        print()
 
         listOfConstituentMomenta = []
         for tmpconst in range(len(arr)):
@@ -408,9 +411,25 @@ for i in range(num_events):
         tPions.Fill(nPi)
 
     elif(isDijetGamma):
-        jet = jets[dj1]
-        cont = constituents[dj1]
-        index = constituent_index[dj1]
+
+        #Let's find  the two highest energy jets that also
+        #match our earlier criteria for good jets
+        jet_sorted_index = np.argsort(np.max(cluster.inclusive_jets()[:]["E"], axis=0))
+        dijet_index_1 = jet_sorted_index[-1]
+        dijet_index_2 = jet_sorted_index[-2]
+        for jsi in reversed(jet_sorted_index):
+            if good_jets_index[jsi] == 1:
+                dijet_index_1 = jsi
+                break
+
+        for jsi in reversed(jet_sorted_index):
+            if (good_jets_index[jsi] == 1) and (jsi is not dijet_index_1):
+                dijet_index_2 = jsi
+                break
+
+        jet = jets[dijet_index_1]
+        cont = constituents[dijet_index_1]
+        index = constituent_index[dijet_index_1]
         arr = sorted(cont, key=lambda x: x['E'], reverse=True)
 
         listOfConstituentMomenta = []
@@ -447,9 +466,9 @@ for i in range(num_events):
                 nPi += 1
         dPions.Fill(nPi)
 
-        jet = jets[dj2]
-        cont = constituents[dj2]
-        index = constituent_index[dj2]
+        jet = jets[dijet_index_2]
+        cont = constituents[dijet_index_2]
+        index = constituent_index[dijet_index_2]
 
         arr = sorted(cont, key=lambda x: x['E'], reverse=True)
 
