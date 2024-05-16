@@ -90,6 +90,8 @@ tj1_v_E = ROOT.TH2D("tj1_v_E","Trijet 1 v E",50,0,175,115,85,250)
 tj2_v_E = ROOT.TH2D("tj2_v_E","Trijet 2 v E",50,0,175,115,85,250)
 tj3_v_E = ROOT.TH2D("tj3_v_E","Trijet 3 v E",50,0,175,115,85,250)
 
+highELeptonClusters = ROOT.TH1F("numHighELeptonClusters","Number of clusters with a lepton E > 50% total E",10,0,10)
+
 isolatedPhotons = ROOT.TH1F("isolatedPhotons","Number of Isolated Photons",30,0,30)
 isolatedPhotonEnergyhist = ROOT.TH1F("isolatedPhotonEnergyhist", "Total Energy of Isolated Photons", 100, 0, 200)
 numClusters = ROOT.TH1F("numClusters", "Total Number of Clusters",50,0,50)
@@ -185,10 +187,16 @@ for i in range(num_events):
     isoP = 0
     numNonPhotonJets = 0
 
+    numHighELeptonClusters = 0
+
     jets = cluster.inclusive_jets()
     constituents = cluster.constituents()
     constituent_index = cluster.constituent_index()
     numClusters.Fill(len(jets))
+
+    #print(" ")
+    #print(cluster.inclusive_jets()[:]["E"])
+    #print(constituents[:]["E"])
 
     if(len(jets) < 2):
         continue
@@ -200,12 +208,21 @@ for i in range(num_events):
     good_jets_index = [] 
 
     #This code iterates through and finds the clusters that
-    #have a photon as their highest energy. 
+    #have a photon as their highest energy.
+    # photon flag = 4, leptons = 1,2
     for tmp_jet_thing,cl,index in zip(jets,constituents,cluster.constituent_index()):
         allPhotons = False
         highest_contE_index = np.argmax(cl[:]["E"])
         if (pwflag[i][index[highest_contE_index]] == 4):
             allPhotons = True
+
+        # Searches for clusters with a lepton that makes up more than 50% of total cluster energy
+        for cont_index in index:
+            if pwflag[i][cont_index] == 1 or pwflag[i][cont_index] == 2:
+                for E in cl[:]["E"]:
+                    if E > (0.5 * tmp_jet_thing["E"]):
+                        numHighELeptonClusters += 1
+
         if (allPhotons):
             for cont_index in index:
                 isolatedPhotonEnergy += np.sqrt(px_branch[i][cont_index]**2 + py_branch[i][cont_index]**2 + pz_branch[i][cont_index]**2) 
@@ -219,6 +236,7 @@ for i in range(num_events):
     isolatedPhotonEnergyhist.Fill(isolatedPhotonEnergy)
     isolatedPhotons.Fill(isoP)
     numUnClustered.Fill(len(cluster.unclustered_particles()))
+    highELeptonClusters.Fill(numHighELeptonClusters)
 
     #I got freaked out about the whole python scope thing 
     #and now my code is becoming unreadable...
@@ -344,11 +362,11 @@ for i in range(num_events):
     #using only the good jets
     #so we need to link the good jets
     #to the constituents
-
     if(isTrijet):
         
         jet_sorted_index = np.argsort(np.max(cluster.inclusive_jets()[:]["E"], axis=0))
         highest_energy_index = jet_sorted_index[-1]
+
         for jsi in reversed(jet_sorted_index):
             if good_jets_index[jsi] == 1:
                 highest_energy_index = jsi
@@ -537,6 +555,8 @@ savehist(di_h_n99_p, "di_h_n99_p")
 savehist(isolatedPhotons,"isolated_photons")
 savehist(isolatedPhotonEnergyhist,"isolatedPhotonEnergy")
 savehist(numClusters,"numClusters")
+
+savehist(highELeptonClusters, "highELeptonClusters")
 
 savehist(tevent_selection,"trijet_event_selection")
 savehist(devent_selection,"dijet_event_selection")
