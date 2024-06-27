@@ -26,5 +26,6 @@ docker run --rm -ti -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mapyde/delphes
 ```
 
 The above command essentially switches you to a container that has most of the libraries needed to run `ROC_Proc.py`. One must install numpy and uproot4 because this docker image does not contain the two, so `pip3 install numpy uproot4`.
+
 Usage:  `python3 ROC_Proc.py <event_file_name.root> <result_run#>` 
 
