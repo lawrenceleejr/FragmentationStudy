@@ -18,7 +18,7 @@ e+ e- > z a (z > j j)
 And then we'll compare their fragmentation as a function of lab frame pT.
 
 
-## How to: run ROC_Proc.py
+## How to: running ROC_Proc.py
 
 using a docker image 
 ```bash
