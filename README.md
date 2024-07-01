@@ -20,11 +20,11 @@ And then we'll compare their fragmentation as a function of lab frame pT.
 
 ## How to: running ROC_Proc.py
 
-using a docker image 
+Using a docker image: 
 ```bash
 docker run --rm -ti -v $PWD:$PWD -w $PWD ghcr.io/scipp-atlas/mapyde/delphes
 ```
-If network acess isn't available then use 
+If network acess isn't available then:
 ```bash
 docker run --rm -ti -v $PWD:$PWD -w $PWD --net=host ghcr.io/scipp-atlas/mapyde/delphes
 ```
