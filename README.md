@@ -30,5 +30,5 @@ docker run --rm -ti -v $PWD:$PWD -w $PWD --net=host ghcr.io/scipp-atlas/mapyde/d
 ```
 One must install numpy and uproot4 because this docker image does not contain the two, so `pip3 install numpy uproot4`.
 
-Usage:  `python3 ROC_Proc.py <event_file_name.root> <run#>` 
+Usage:  `ROC_Proc.py <event_file_name.root> <run#>` 
 
