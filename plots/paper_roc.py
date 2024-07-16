@@ -86,7 +86,7 @@ def plot_roc_curve(fpr1, tpr1, fpr2, tpr2, title='ROC Curve', output_filename='r
     # plt.title(title)
     plt.legend(loc="lower right")
 
-    plt.text(0.5, 0.3, f'Pythia 8.306\n'+r"$n_{90}$-based $q/g$ Tagger"+f'\n∆AUC: {-AUC1+AUC2:0.2f}\nPointwise Distance: {euclideandistance:0.2f}', fontsize=14, color='black')
+    plt.text(0.5, 0.3, f'Pythia 8.306\n'+r"$n_{90}$-based $q/g$ Tagger"+f'\n{ptrange} GeV Jets\n∆AUC: {-AUC1+AUC2:0.2f}\nPointwise Distance: {euclideandistance:0.2f}', fontsize=14, color='black')
     # Save the plot as a PDF
 
     plt.tight_layout()  
